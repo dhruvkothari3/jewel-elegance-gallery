@@ -2,15 +2,36 @@ import { useState } from 'react';
 import { Menu, X, Search, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useJewelry } from '@/contexts/JewelryContext';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const { filters, updateFilter } = useJewelry();
 
   const menuCategories = {
-    'By Type': ['Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Bangles', 'Pendants'],
-    'By Material': ['Gold', 'Diamond', 'Platinum', 'Rose Gold', 'White Gold'],
-    'By Occasion': ['Bridal', 'Festive', 'Daily Wear', 'Gift Ideas', 'Anniversary']
+    'By Type': ['Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Bangles'],
+    'By Material': ['Gold', 'Diamond', 'Platinum', 'Rose Gold', 'White Gold', 'Gemstone'],
+    'By Occasion': ['Bridal', 'Festive', 'Daily Wear', 'Office', 'Gift Ideas'],
+    'Collections': ['Rivaah', 'GlamDays', 'Modern Minimal', 'Signature Series']
+  };
+
+  const handleCategoryClick = (category: string, item: string) => {
+    if (category === 'By Type') {
+      updateFilter('types', [item]);
+    } else if (category === 'By Material') {
+      updateFilter('materials', [item]);
+    } else if (category === 'By Occasion') {
+      updateFilter('occasions', [item]);
+    } else if (category === 'Collections') {
+      updateFilter('collections', [item]);
+    }
+    setActiveDropdown(null);
+    setIsMenuOpen(false);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateFilter('search', e.target.value);
   };
 
   return (
@@ -43,13 +64,13 @@ const Navigation = () => {
                     activeDropdown === category ? 'opacity-100 visible' : 'opacity-0 invisible'
                   }`}>
                     {items.map((item) => (
-                      <a
+                      <button
                         key={item}
-                        href="#"
-                        className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-smooth"
+                        onClick={() => handleCategoryClick(category, item)}
+                        className="block w-full text-left px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-smooth"
                       >
                         {item}
-                      </a>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -66,6 +87,8 @@ const Navigation = () => {
               <Input
                 type="search"
                 placeholder="Search jewelry..."
+                value={filters.search}
+                onChange={handleSearchChange}
                 className="pl-10 pr-4 py-2 w-64 border-border focus:ring-2 focus:ring-primary/20"
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -98,13 +121,13 @@ const Navigation = () => {
                     {category}
                   </button>
                   {items.map((item) => (
-                    <a
+                    <button
                       key={item}
-                      href="#"
-                      className="block px-6 py-2 text-sm text-muted-foreground hover:text-primary"
+                      onClick={() => handleCategoryClick(category, item)}
+                      className="block w-full text-left px-6 py-2 text-sm text-muted-foreground hover:text-primary"
                     >
                       {item}
-                    </a>
+                    </button>
                   ))}
                 </div>
               ))}

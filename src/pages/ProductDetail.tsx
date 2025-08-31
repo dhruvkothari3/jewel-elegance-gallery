@@ -1,42 +1,51 @@
 import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Share2, MapPin, Eye, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import Navigation from '@/components/Navigation';
-import productRing from '@/assets/product-ring.jpg';
-import productEarrings from '@/assets/product-earrings.jpg';
-import productNecklace from '@/assets/product-necklace.jpg';
+import { useJewelry } from '@/contexts/JewelryContext';
 
 const ProductDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { items } = useJewelry();
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  const product = {
-    id: 1,
-    name: "Eternal Promise Diamond Ring",
-    collection: "Bridal Collection",
-    sku: "EL-BR-001",
-    material: "18K Rose Gold",
-    occasion: "Bridal, Anniversary",
-    priceRange: "₹85,000 - ₹1,20,000",
-    description: "A breathtaking symbol of eternal love, this exquisite diamond ring features a stunning center stone surrounded by delicately placed diamonds. Crafted in lustrous 18K rose gold, every detail speaks of timeless elegance and unmatched craftsmanship.",
+  const product = items.find(item => item.id === parseInt(id || '1'));
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-serif font-bold text-foreground mb-4">Product Not Found</h1>
+          <p className="text-muted-foreground mb-6">The product you're looking for doesn't exist.</p>
+          <Button onClick={() => navigate('/')}>Return to Home</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Enhanced product data for display
+  const enhancedProduct = {
+    ...product,
+    images: [product.image, product.image, product.image], // Using same image for demo
     features: [
-      "Certified diamonds with excellent cut grade",
-      "18K rose gold setting with rhodium plating",
-      "Available in sizes 4-10 (US sizing)",
+      "Certified materials with excellent quality grade",
+      "Premium setting with protective coating",
+      "Available in multiple sizes",
       "Comes with lifetime warranty and certification",
-      "Free resizing within 30 days of purchase"
+      "Free maintenance for first year"
     ],
     specifications: {
-      "Metal Type": "18K Rose Gold",
-      "Diamond Quality": "VS-SI, F-G Color",
-      "Total Weight": "3.2 grams",
-      "Ring Size": "Adjustable 4-10",
-      "Certification": "BIS Hallmark, Diamond Certificate"
-    },
-    images: [productRing, productEarrings, productNecklace],
-    isNew: true
+      "Metal Type": product.material,
+      "Item Code": product.sku,
+      "Collection": product.collection,
+      "Occasion": product.occasion,
+      "Price Range": product.priceRange
+    }
   };
 
   return (
@@ -46,7 +55,12 @@ const ProductDetail = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-8">
-          <Button variant="ghost" size="sm" className="p-0 h-auto">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="p-0 h-auto"
+            onClick={() => navigate('/')}
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Collections
           </Button>
@@ -57,15 +71,15 @@ const ProductDetail = () => {
           <div className="space-y-4">
             <div className="aspect-square overflow-hidden rounded-lg bg-muted">
               <img
-                src={product.images[selectedImage]}
-                alt={product.name}
+                src={enhancedProduct.images[selectedImage]}
+                alt={enhancedProduct.name}
                 className="w-full h-full object-cover jewelry-hover"
               />
             </div>
             
             {/* Thumbnail Images */}
             <div className="flex space-x-4">
-              {product.images.map((image, index) => (
+              {enhancedProduct.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
@@ -77,7 +91,7 @@ const ProductDetail = () => {
                 >
                   <img
                     src={image}
-                    alt={`${product.name} view ${index + 1}`}
+                    alt={`${enhancedProduct.name} view ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
                 </button>
@@ -90,14 +104,14 @@ const ProductDetail = () => {
             <div>
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  {product.isNew && (
+                  {enhancedProduct.isNew && (
                     <Badge className="bg-primary text-primary-foreground mb-2">
                       New Arrival
                     </Badge>
                   )}
-                  <p className="text-sm text-muted-foreground">{product.collection}</p>
+                  <p className="text-sm text-muted-foreground">{enhancedProduct.collection}</p>
                   <h1 className="text-3xl lg:text-4xl font-serif font-bold text-foreground">
-                    {product.name}
+                    {enhancedProduct.name}
                   </h1>
                 </div>
                 <div className="flex space-x-2">
@@ -115,8 +129,8 @@ const ProductDetail = () => {
                 </div>
               </div>
               
-              <p className="text-2xl font-bold text-primary mb-4">{product.priceRange}</p>
-              <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+              <p className="text-2xl font-bold text-primary mb-4">{enhancedProduct.priceRange}</p>
+              <p className="text-muted-foreground leading-relaxed">{enhancedProduct.description}</p>
             </div>
 
             <Separator />
@@ -127,15 +141,19 @@ const ProductDetail = () => {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">SKU:</span>
-                  <p className="font-medium">{product.sku}</p>
+                  <p className="font-medium">{enhancedProduct.sku}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Material:</span>
-                  <p className="font-medium">{product.material}</p>
+                  <p className="font-medium">{enhancedProduct.material}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Type:</span>
+                  <p className="font-medium">{enhancedProduct.type}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Occasion:</span>
-                  <p className="font-medium">{product.occasion}</p>
+                  <p className="font-medium">{enhancedProduct.occasion}</p>
                 </div>
               </div>
             </div>
@@ -149,7 +167,7 @@ const ProductDetail = () => {
                 Key Features
               </h3>
               <ul className="space-y-2">
-                {product.features.map((feature, index) => (
+                {enhancedProduct.features.map((feature, index) => (
                   <li key={index} className="flex items-start space-x-3 text-sm">
                     <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
                     <span className="text-muted-foreground">{feature}</span>
@@ -164,7 +182,7 @@ const ProductDetail = () => {
             <div>
               <h3 className="text-lg font-serif font-semibold mb-4">Specifications</h3>
               <div className="space-y-3">
-                {Object.entries(product.specifications).map(([key, value]) => (
+                {Object.entries(enhancedProduct.specifications).map(([key, value]) => (
                   <div key={key} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{key}:</span>
                     <span className="font-medium text-right">{value}</span>

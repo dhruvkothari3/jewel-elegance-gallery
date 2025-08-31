@@ -1,6 +1,7 @@
-import { MapPin, Phone, Clock, Navigation } from 'lucide-react';
+import { MapPin, Phone, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import StoreMap from './StoreMap';
 
 const StoreLocator = () => {
   const stores = [
@@ -55,13 +56,7 @@ const StoreLocator = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg"
-              className="gradient-gold text-primary-foreground border-0 shadow-gold hover:shadow-elegant transition-elegant"
-            >
-              <Navigation className="h-4 w-4 mr-2" />
-              Find Nearest Store
-            </Button>
+            <StoreMap />
             <Button 
               variant="outline" 
               size="lg"
