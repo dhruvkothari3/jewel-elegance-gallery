@@ -1,13 +1,17 @@
-import { useState } from 'react';
-import { Menu, X, Search, MapPin } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Menu, X, Search, MapPin, X as XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useJewelry } from '@/contexts/JewelryContext';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const { filters, updateFilter } = useJewelry();
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const { filters, updateFilter, resetFilters, items } = useJewelry();
 
   const menuCategories = {
     'By Type': ['Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Bangles'],
@@ -15,6 +19,60 @@ const Navigation = () => {
     'By Occasion': ['Bridal', 'Festive', 'Daily Wear', 'Office', 'Gift Ideas'],
     'Collections': ['Rivaah', 'GlamDays', 'Modern Minimal', 'Signature Series']
   };
+
+  // Generate search suggestions based on current input
+  useEffect(() => {
+    if (filters.search.trim()) {
+      const suggestions = [];
+      const searchLower = filters.search.toLowerCase().trim();
+      
+      // Add material suggestions
+      const materials = [...new Set(items.map(item => item.material))];
+      suggestions.push(...materials.filter(material => 
+        material.toLowerCase().includes(searchLower)
+      ));
+      
+      // Add type suggestions
+      const types = [...new Set(items.map(item => item.type))];
+      suggestions.push(...types.filter(type => 
+        type.toLowerCase().includes(searchLower)
+      ));
+      
+      // Add occasion suggestions
+      const occasions = [...new Set(items.map(item => item.occasion))];
+      suggestions.push(...occasions.filter(occasion => 
+        occasion.toLowerCase().includes(searchLower)
+      ));
+      
+      // Add collection suggestions
+      const collections = [...new Set(items.map(item => item.collection))];
+      suggestions.push(...collections.filter(collection => 
+        collection.toLowerCase().includes(searchLower)
+      ));
+      
+      // Remove duplicates and limit to 5 suggestions
+      const uniqueSuggestions = [...new Set(suggestions)].slice(0, 5);
+      setSearchSuggestions(uniqueSuggestions);
+      setShowSearchSuggestions(true);
+    } else {
+      setShowSearchSuggestions(false);
+      setSearchSuggestions([]);
+    }
+  }, [filters.search, items]);
+
+  // Close search suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleCategoryClick = (category: string, item: string) => {
     if (category === 'By Type') {
@@ -32,6 +90,36 @@ const Navigation = () => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateFilter('search', e.target.value);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    updateFilter('search', suggestion);
+    setShowSearchSuggestions(false);
+  };
+
+  const clearFilter = (key: keyof typeof filters, value: string) => {
+    const currentValues = filters[key] as string[];
+    updateFilter(key, currentValues.filter(item => item !== value));
+  };
+
+  const clearSearch = () => {
+    updateFilter('search', '');
+    setShowSearchSuggestions(false);
+  };
+
+  const hasActiveFilters = () => {
+    return filters.search || 
+           filters.materials.length > 0 || 
+           filters.types.length > 0 || 
+           filters.occasions.length > 0 || 
+           filters.collections.length > 0;
+  };
+
+  const scrollToStoreLocator = () => {
+    const element = document.getElementById('store-locator');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -83,17 +171,46 @@ const Navigation = () => {
 
           {/* Search and Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <div className="relative">
+            <div className="relative" ref={searchRef}>
               <Input
                 type="search"
                 placeholder="Search jewelry..."
                 value={filters.search}
                 onChange={handleSearchChange}
+                onFocus={() => filters.search.trim() && setShowSearchSuggestions(true)}
                 className="pl-10 pr-4 py-2 w-64 border-border focus:ring-2 focus:ring-primary/20"
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              {filters.search && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              )}
+              
+              {/* Search Suggestions */}
+              {showSearchSuggestions && searchSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-elegant z-50">
+                  {searchSuggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="block w-full text-left px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-smooth first:rounded-t-lg last:rounded-b-lg"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              onClick={scrollToStoreLocator}
+            >
               <MapPin className="h-4 w-4 mr-2" />
               Store Locator
             </Button>
@@ -110,6 +227,65 @@ const Navigation = () => {
             </Button>
           </div>
         </div>
+
+        {/* Active Filters Display */}
+        {hasActiveFilters() && (
+          <div className="border-t border-border py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 flex-wrap gap-2">
+                <span className="text-sm text-muted-foreground">Active filters:</span>
+                {filters.search && (
+                  <Badge variant="secondary" className="gap-1">
+                    Search: "{filters.search}"
+                    <button onClick={clearSearch} className="ml-1 hover:text-destructive">
+                      <XIcon className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                {filters.materials.map(material => (
+                  <Badge key={`material-${material}`} variant="secondary" className="gap-1">
+                    {material}
+                    <button onClick={() => clearFilter('materials', material)} className="ml-1 hover:text-destructive">
+                      <XIcon className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+                {filters.types.map(type => (
+                  <Badge key={`type-${type}`} variant="secondary" className="gap-1">
+                    {type}
+                    <button onClick={() => clearFilter('types', type)} className="ml-1 hover:text-destructive">
+                      <XIcon className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+                {filters.occasions.map(occasion => (
+                  <Badge key={`occasion-${occasion}`} variant="secondary" className="gap-1">
+                    {occasion}
+                    <button onClick={() => clearFilter('occasions', occasion)} className="ml-1 hover:text-destructive">
+                      <XIcon className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+                {filters.collections.map(collection => (
+                  <Badge key={`collection-${collection}`} variant="secondary" className="gap-1">
+                    {collection}
+                    <button onClick={() => clearFilter('collections', collection)} className="ml-1 hover:text-destructive">
+                      <XIcon className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={resetFilters}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Clear All
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Mobile Navigation */}
         {isMenuOpen && (

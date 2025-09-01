@@ -16,6 +16,7 @@ interface ProductCardProps {
   isFavorite?: boolean;
   sku: string;
   description: string;
+  viewMode?: 'grid' | 'large';
 }
 
 const ProductCard = ({
@@ -30,16 +31,24 @@ const ProductCard = ({
   isNew,
   isFavorite,
   sku,
-  description
+  description,
+  viewMode = 'grid'
 }: ProductCardProps) => {
   const navigate = useNavigate();
 
   const handleViewProduct = () => {
     navigate(`/product/${id}`);
   };
+
+  const isLargeView = viewMode === 'large';
+
   return (
-    <Card className="group overflow-hidden shadow-soft hover:shadow-elegant transition-elegant jewelry-hover bg-card border-border">
-      <div className="relative aspect-square overflow-hidden">
+    <Card className={`group overflow-hidden shadow-soft hover:shadow-elegant transition-elegant jewelry-hover bg-card border-border ${
+      isLargeView ? 'h-full' : ''
+    }`}>
+      <div className={`relative overflow-hidden ${
+        isLargeView ? 'aspect-[4/3]' : 'aspect-square'
+      }`}>
         <img
           src={image}
           alt={name}
@@ -77,17 +86,21 @@ const ProductCard = ({
         </div>
       </div>
 
-      <CardContent className="p-4">
+      <CardContent className={`p-4 ${isLargeView ? 'flex-1 flex flex-col' : ''}`}>
         <div 
-          className="space-y-2 cursor-pointer" 
+          className={`space-y-2 cursor-pointer ${isLargeView ? 'flex-1 flex flex-col' : ''}`}
           onClick={handleViewProduct}
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="font-serif font-semibold text-lg text-foreground line-clamp-1 hover:text-primary transition-smooth">
+              <h3 className={`font-serif font-semibold text-foreground line-clamp-1 hover:text-primary transition-smooth ${
+                isLargeView ? 'text-xl' : 'text-lg'
+              }`}>
                 {name}
               </h3>
-              <p className="text-sm text-muted-foreground">{collection}</p>
+              <p className={`text-muted-foreground ${isLargeView ? 'text-base' : 'text-sm'}`}>
+                {collection}
+              </p>
             </div>
           </div>
           
@@ -96,14 +109,22 @@ const ProductCard = ({
             <span className="text-muted-foreground">{material}</span>
           </div>
           
+          {isLargeView && (
+            <p className="text-sm text-muted-foreground line-clamp-2 flex-1">
+              {description}
+            </p>
+          )}
+          
           <div className="text-xs text-muted-foreground">
             {occasion} • SKU: {sku}
           </div>
           
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-lg font-semibold text-primary">{priceRange}</span>
+          <div className={`flex items-center justify-between pt-2 ${isLargeView ? 'mt-auto' : ''}`}>
+            <span className={`font-semibold text-primary ${isLargeView ? 'text-xl' : 'text-lg'}`}>
+              {priceRange}
+            </span>
             <Button 
-              size="sm" 
+              size={isLargeView ? 'default' : 'sm'}
               variant="outline"
               className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth"
               onClick={(e) => {
@@ -111,7 +132,7 @@ const ProductCard = ({
                 // Handle enquire action
               }}
             >
-              <MapPin className="h-3 w-3 mr-1" />
+              <MapPin className={`${isLargeView ? 'h-4 w-4' : 'h-3 w-3'} mr-1`} />
               Enquire
             </Button>
           </div>

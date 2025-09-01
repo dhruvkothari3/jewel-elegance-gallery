@@ -237,6 +237,96 @@ const jewelryData: JewelryItem[] = [
     popular: true,
     sku: "WGB010",
     description: "Simple and elegant white gold band"
+  },
+  {
+    id: 11,
+    name: "Platinum Diamond Necklace",
+    collection: "Signature Series",
+    image: productNecklace,
+    material: "Platinum",
+    type: "Necklaces",
+    occasion: "Bridal",
+    priceRange: "₹1,20,000 - ₹1,80,000",
+    priceMin: 120000,
+    priceMax: 180000,
+    isNew: true,
+    isFavorite: true,
+    featured: true,
+    popular: true,
+    sku: "PDN011",
+    description: "Luxurious platinum necklace with diamond accents"
+  },
+  {
+    id: 12,
+    name: "Rose Gold Bangle Set",
+    collection: "Rivaah",
+    image: productBangles,
+    material: "Rose Gold",
+    type: "Bangles",
+    occasion: "Bridal",
+    priceRange: "₹65,000 - ₹95,000",
+    priceMin: 65000,
+    priceMax: 95000,
+    isNew: false,
+    isFavorite: false,
+    featured: true,
+    popular: true,
+    sku: "RGBS012",
+    description: "Elegant rose gold bangle set for bridal wear"
+  },
+  {
+    id: 13,
+    name: "Emerald Gemstone Ring",
+    collection: "GlamDays",
+    image: productRing,
+    material: "Gemstone",
+    type: "Rings",
+    occasion: "Festive",
+    priceRange: "₹75,000 - ₹1,10,000",
+    priceMin: 75000,
+    priceMax: 110000,
+    isNew: true,
+    isFavorite: true,
+    featured: false,
+    popular: true,
+    sku: "EGR013",
+    description: "Stunning emerald ring with intricate detailing"
+  },
+  {
+    id: 14,
+    name: "Gold Chain Bracelet",
+    collection: "Modern Minimal",
+    image: productBangles,
+    material: "Gold",
+    type: "Bracelets",
+    occasion: "Daily Wear",
+    priceRange: "₹28,000 - ₹42,000",
+    priceMin: 28000,
+    priceMax: 42000,
+    isNew: false,
+    isFavorite: false,
+    featured: false,
+    popular: true,
+    sku: "GCB014",
+    description: "Classic gold chain bracelet for everyday elegance"
+  },
+  {
+    id: 15,
+    name: "Sapphire Drop Earrings",
+    collection: "Signature Series",
+    image: productEarrings,
+    material: "Gemstone",
+    type: "Earrings",
+    occasion: "Office",
+    priceRange: "₹55,000 - ₹80,000",
+    priceMin: 55000,
+    priceMax: 80000,
+    isNew: false,
+    isFavorite: true,
+    featured: true,
+    popular: false,
+    sku: "SDE015",
+    description: "Sophisticated sapphire drop earrings for professional settings"
   }
 ];
 
@@ -260,13 +350,15 @@ export const JewelryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     let filtered = [...items];
 
     // Search filter
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
+    if (filters.search.trim()) {
+      const searchLower = filters.search.toLowerCase().trim();
       filtered = filtered.filter(item =>
         item.name.toLowerCase().includes(searchLower) ||
         item.material.toLowerCase().includes(searchLower) ||
         item.type.toLowerCase().includes(searchLower) ||
-        item.collection.toLowerCase().includes(searchLower)
+        item.collection.toLowerCase().includes(searchLower) ||
+        item.occasion.toLowerCase().includes(searchLower) ||
+        item.description.toLowerCase().includes(searchLower)
       );
     }
 
@@ -298,9 +390,11 @@ export const JewelryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       );
     }
 
-    // Price range filter
+    // Price range filter - check if item price falls within the range
     filtered = filtered.filter(item =>
-      item.priceMin >= filters.priceRange[0] && item.priceMax <= filters.priceRange[1]
+      (item.priceMin >= filters.priceRange[0] && item.priceMin <= filters.priceRange[1]) ||
+      (item.priceMax >= filters.priceRange[0] && item.priceMax <= filters.priceRange[1]) ||
+      (item.priceMin <= filters.priceRange[0] && item.priceMax >= filters.priceRange[1])
     );
 
     // Sorting

@@ -3,12 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useJewelry } from '@/contexts/JewelryContext';
 import { useState } from 'react';
 
 const FilterSidebar = () => {
-  const { filters, updateFilter, resetFilters } = useJewelry();
+  const { filters, updateFilter, resetFilters, items } = useJewelry();
   const [isOpen, setIsOpen] = useState(false);
 
   const filterOptions = {
@@ -29,6 +30,20 @@ const FilterSidebar = () => {
 
   const formatPrice = (price: number) => {
     return `₹${(price / 1000).toFixed(0)}k`;
+  };
+
+  const getFilterCount = (category: keyof typeof filterOptions, value: string) => {
+    return items.filter(item => {
+      if (category === 'materials') return item.material === value;
+      if (category === 'types') return item.type === value;
+      if (category === 'occasions') return item.occasion === value;
+      if (category === 'collections') return item.collection === value;
+      return false;
+    }).length;
+  };
+
+  const getActiveFilterCount = () => {
+    return filters.materials.length + filters.types.length + filters.occasions.length + filters.collections.length;
   };
 
   const FilterContent = () => (
@@ -57,20 +72,25 @@ const FilterSidebar = () => {
         <Label className="text-sm font-medium">Material</Label>
         <div className="grid grid-cols-1 gap-2">
           {filterOptions.materials.map((material) => (
-            <div key={material} className="flex items-center space-x-2">
-              <Checkbox
-                id={`material-${material}`}
-                checked={filters.materials.includes(material)}
-                onCheckedChange={(checked) => 
-                  handleCheckboxChange('materials', material, checked as boolean)
-                }
-              />
-              <Label 
-                htmlFor={`material-${material}`} 
-                className="text-sm cursor-pointer"
-              >
-                {material}
-              </Label>
+            <div key={material} className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`material-${material}`}
+                  checked={filters.materials.includes(material)}
+                  onCheckedChange={(checked) => 
+                    handleCheckboxChange('materials', material, checked as boolean)
+                  }
+                />
+                <Label 
+                  htmlFor={`material-${material}`} 
+                  className="text-sm cursor-pointer"
+                >
+                  {material}
+                </Label>
+              </div>
+              <Badge variant="secondary" className="text-xs">
+                {getFilterCount('materials', material)}
+              </Badge>
             </div>
           ))}
         </div>
@@ -81,20 +101,25 @@ const FilterSidebar = () => {
         <Label className="text-sm font-medium">Type</Label>
         <div className="grid grid-cols-1 gap-2">
           {filterOptions.types.map((type) => (
-            <div key={type} className="flex items-center space-x-2">
-              <Checkbox
-                id={`type-${type}`}
-                checked={filters.types.includes(type)}
-                onCheckedChange={(checked) => 
-                  handleCheckboxChange('types', type, checked as boolean)
-                }
-              />
-              <Label 
-                htmlFor={`type-${type}`} 
-                className="text-sm cursor-pointer"
-              >
-                {type}
-              </Label>
+            <div key={type} className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`type-${type}`}
+                  checked={filters.types.includes(type)}
+                  onCheckedChange={(checked) => 
+                    handleCheckboxChange('types', type, checked as boolean)
+                  }
+                />
+                <Label 
+                  htmlFor={`type-${type}`} 
+                  className="text-sm cursor-pointer"
+                >
+                  {type}
+                </Label>
+              </div>
+              <Badge variant="secondary" className="text-xs">
+                {getFilterCount('types', type)}
+              </Badge>
             </div>
           ))}
         </div>
@@ -105,20 +130,25 @@ const FilterSidebar = () => {
         <Label className="text-sm font-medium">Occasion</Label>
         <div className="grid grid-cols-1 gap-2">
           {filterOptions.occasions.map((occasion) => (
-            <div key={occasion} className="flex items-center space-x-2">
-              <Checkbox
-                id={`occasion-${occasion}`}
-                checked={filters.occasions.includes(occasion)}
-                onCheckedChange={(checked) => 
-                  handleCheckboxChange('occasions', occasion, checked as boolean)
-                }
-              />
-              <Label 
-                htmlFor={`occasion-${occasion}`} 
-                className="text-sm cursor-pointer"
-              >
-                {occasion}
-              </Label>
+            <div key={occasion} className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`occasion-${occasion}`}
+                  checked={filters.occasions.includes(occasion)}
+                  onCheckedChange={(checked) => 
+                    handleCheckboxChange('occasions', occasion, checked as boolean)
+                  }
+                />
+                <Label 
+                  htmlFor={`occasion-${occasion}`} 
+                  className="text-sm cursor-pointer"
+                >
+                  {occasion}
+                </Label>
+              </div>
+              <Badge variant="secondary" className="text-xs">
+                {getFilterCount('occasions', occasion)}
+              </Badge>
             </div>
           ))}
         </div>
@@ -129,20 +159,25 @@ const FilterSidebar = () => {
         <Label className="text-sm font-medium">Collection</Label>
         <div className="grid grid-cols-1 gap-2">
           {filterOptions.collections.map((collection) => (
-            <div key={collection} className="flex items-center space-x-2">
-              <Checkbox
-                id={`collection-${collection}`}
-                checked={filters.collections.includes(collection)}
-                onCheckedChange={(checked) => 
-                  handleCheckboxChange('collections', collection, checked as boolean)
-                }
-              />
-              <Label 
-                htmlFor={`collection-${collection}`} 
-                className="text-sm cursor-pointer"
-              >
-                {collection}
-              </Label>
+            <div key={collection} className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`collection-${collection}`}
+                  checked={filters.collections.includes(collection)}
+                  onCheckedChange={(checked) => 
+                    handleCheckboxChange('collections', collection, checked as boolean)
+                  }
+                />
+                <Label 
+                  htmlFor={`collection-${collection}`} 
+                  className="text-sm cursor-pointer"
+                >
+                  {collection}
+                </Label>
+              </div>
+              <Badge variant="secondary" className="text-xs">
+                {getFilterCount('collections', collection)}
+              </Badge>
             </div>
           ))}
         </div>
@@ -165,10 +200,18 @@ const FilterSidebar = () => {
         <Button
           variant="outline"
           size="sm"
-          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground relative"
         >
           <Filter className="h-4 w-4 mr-2" />
           Filters
+          {getActiveFilterCount() > 0 && (
+            <Badge 
+              variant="secondary" 
+              className="ml-2 h-5 w-5 p-0 text-xs bg-primary text-primary-foreground"
+            >
+              {getActiveFilterCount()}
+            </Badge>
+          )}
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-80 overflow-y-auto">

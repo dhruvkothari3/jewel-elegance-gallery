@@ -12,7 +12,9 @@ const Index = () => {
       <main>
         <HeroSection />
         <FeaturedProducts />
-        <CollectionShowcase />
+        <div id="collections">
+          <CollectionShowcase />
+        </div>
         <StoreLocator />
       </main>
       

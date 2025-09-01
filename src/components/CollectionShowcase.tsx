@@ -1,9 +1,12 @@
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useJewelry } from '@/contexts/JewelryContext';
 import bridalImage from '@/assets/collection-bridal.jpg';
 import heroImage from '@/assets/hero-jewelry.jpg';
 
 const CollectionShowcase = () => {
+  const { updateFilter } = useJewelry();
+
   const collections = [
     {
       id: 1,
@@ -11,7 +14,8 @@ const CollectionShowcase = () => {
       description: "Exquisite designs for your most precious moments. Crafted with traditional artistry and modern elegance.",
       image: bridalImage,
       itemCount: "150+ pieces",
-      featured: true
+      featured: true,
+      filterValue: "Bridal"
     },
     {
       id: 2,
@@ -19,9 +23,19 @@ const CollectionShowcase = () => {
       description: "Sophisticated pieces that complement your everyday style with understated luxury.",
       image: heroImage,
       itemCount: "200+ pieces",
-      featured: false
+      featured: false,
+      filterValue: "Daily Wear"
     }
   ];
+
+  const handleCollectionClick = (filterValue: string) => {
+    updateFilter('occasions', [filterValue]);
+    // Scroll to products section
+    const productsSection = document.querySelector('section');
+    if (productsSection) {
+      productsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-elegant">
@@ -75,6 +89,7 @@ const CollectionShowcase = () => {
                     <Button 
                       size="lg"
                       className="gradient-gold text-primary-foreground border-0 shadow-gold hover:shadow-elegant transition-elegant group"
+                      onClick={() => handleCollectionClick(collection.filterValue)}
                     >
                       Explore Collection
                       <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />

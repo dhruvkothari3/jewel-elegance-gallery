@@ -1,4 +1,4 @@
-import { Grid3X3, LayoutGrid } from 'lucide-react';
+import { Grid3X3, LayoutGrid, List } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import ProductCard from './ProductCard';
@@ -14,6 +14,16 @@ const FeaturedProducts = () => {
 
   const handleViewModeChange = (mode: 'grid' | 'large') => {
     updateFilter('viewMode', mode);
+  };
+
+  const getGridClasses = () => {
+    switch (filters.viewMode) {
+      case 'large':
+        return 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3';
+      case 'grid':
+      default:
+        return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+    }
   };
 
   return (
@@ -53,6 +63,7 @@ const FeaturedProducts = () => {
                 size="sm"
                 onClick={() => handleViewModeChange('grid')}
                 className="rounded-r-none"
+                title="Compact Grid View"
               >
                 <Grid3X3 className="h-4 w-4" />
               </Button>
@@ -61,6 +72,7 @@ const FeaturedProducts = () => {
                 size="sm"
                 onClick={() => handleViewModeChange('large')}
                 className="rounded-l-none"
+                title="Large Card View"
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
@@ -73,6 +85,11 @@ const FeaturedProducts = () => {
           <p className="text-muted-foreground">
             Showing {filteredItems.length} {filteredItems.length === 1 ? 'product' : 'products'}
             {filters.search && ` for "${filters.search}"`}
+            {(filters.materials.length > 0 || filters.types.length > 0 || filters.occasions.length > 0 || filters.collections.length > 0) && (
+              <span className="ml-2">
+                with {filters.materials.length + filters.types.length + filters.occasions.length + filters.collections.length} active filters
+              </span>
+            )}
           </p>
         </div>
 
@@ -84,22 +101,31 @@ const FeaturedProducts = () => {
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg mb-4">No products found matching your criteria</p>
-            <Button 
-              variant="outline"
-              onClick={() => updateFilter('search', '')}
-              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-            >
-              Clear Search
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button 
+                variant="outline"
+                onClick={() => updateFilter('search', '')}
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                Clear Search
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => updateFilter('materials', [])}
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                Clear All Filters
+              </Button>
+            </div>
           </div>
         ) : (
-          <div className={`grid gap-8 ${
-            filters.viewMode === 'grid' 
-              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-              : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
-          }`}>
+          <div className={`grid gap-6 ${getGridClasses()}`}>
             {filteredItems.map((product) => (
-              <ProductCard key={product.id} {...product} />
+              <ProductCard 
+                key={product.id} 
+                {...product} 
+                viewMode={filters.viewMode}
+              />
             ))}
           </div>
         )}
