@@ -14,16 +14,226 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      collections: {
+        Row: {
+          banner_image: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          handle: string
+          id: string
+          name: string
+        }
+        Insert: {
+          banner_image?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          handle: string
+          id?: string
+          name: string
+        }
+        Update: {
+          banner_image?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          handle?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          collection_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          featured: boolean
+          id: string
+          images: string[]
+          is_deleted: boolean
+          material: Database["public"]["Enums"]["product_material"]
+          meta_description: string | null
+          meta_title: string | null
+          most_loved: boolean
+          name: string
+          new_arrival: boolean
+          occasion: Database["public"]["Enums"]["product_occasion"] | null
+          sizes: string[] | null
+          sku: string | null
+          slug: string
+          stock: number
+          type: Database["public"]["Enums"]["product_type"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          collection_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          featured?: boolean
+          id?: string
+          images?: string[]
+          is_deleted?: boolean
+          material: Database["public"]["Enums"]["product_material"]
+          meta_description?: string | null
+          meta_title?: string | null
+          most_loved?: boolean
+          name: string
+          new_arrival?: boolean
+          occasion?: Database["public"]["Enums"]["product_occasion"] | null
+          sizes?: string[] | null
+          sku?: string | null
+          slug: string
+          stock?: number
+          type: Database["public"]["Enums"]["product_type"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          collection_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          featured?: boolean
+          id?: string
+          images?: string[]
+          is_deleted?: boolean
+          material?: Database["public"]["Enums"]["product_material"]
+          meta_description?: string | null
+          meta_title?: string | null
+          most_loved?: boolean
+          name?: string
+          new_arrival?: boolean
+          occasion?: Database["public"]["Enums"]["product_occasion"] | null
+          sizes?: string[] | null
+          sku?: string | null
+          slug?: string
+          stock?: number
+          type?: Database["public"]["Enums"]["product_type"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stores: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          hours: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          map_link: string | null
+          phone: string | null
+          store_name: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          hours?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          map_link?: string | null
+          phone?: string | null
+          store_name: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          hours?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          map_link?: string | null
+          phone?: string | null
+          store_name?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      gtrgm_compress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_decompress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_in: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_options: {
+        Args: { "": unknown }
+        Returns: undefined
+      }
+      gtrgm_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      set_limit: {
+        Args: { "": number }
+        Returns: number
+      }
+      show_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      show_trgm: {
+        Args: { "": string }
+        Returns: string[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "customer"
+      product_material: "gold" | "diamond" | "platinum" | "rose-gold"
+      product_occasion: "bridal" | "festive" | "daily-wear" | "gift"
+      product_type: "ring" | "necklace" | "earring" | "bracelet" | "bangle"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +360,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "customer"],
+      product_material: ["gold", "diamond", "platinum", "rose-gold"],
+      product_occasion: ["bridal", "festive", "daily-wear", "gift"],
+      product_type: ["ring", "necklace", "earring", "bracelet", "bangle"],
+    },
   },
 } as const
