@@ -1,10 +1,16 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Package, Gem, Store, BarChart3 } from 'lucide-react';
+import { Package, Gem, Store, BarChart3, AlertTriangle } from 'lucide-react';
+import { ProductManagement } from './ProductManagement';
+import { CollectionManagement } from './CollectionManagement';
+import { StoreManagement } from './StoreManagement';
+import { StockManagement } from './StockManagement';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 export const AdminDashboard: React.FC = () => {
+  const { stats } = useDashboardStats();
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -25,8 +31,10 @@ export const AdminDashboard: React.FC = () => {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">248</div>
-              <p className="text-xs text-muted-foreground">+12 from last month</p>
+              <div className="text-2xl font-bold">{stats.loading ? '...' : stats.totalProducts}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.featuredProducts} featured, {stats.newArrivals} new arrivals
+              </p>
             </CardContent>
           </Card>
           
@@ -36,8 +44,8 @@ export const AdminDashboard: React.FC = () => {
               <Gem className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">8</div>
-              <p className="text-xs text-muted-foreground">4 active campaigns</p>
+              <div className="text-2xl font-bold">{stats.loading ? '...' : stats.totalCollections}</div>
+              <p className="text-xs text-muted-foreground">Active collections</p>
             </CardContent>
           </Card>
           
@@ -47,19 +55,23 @@ export const AdminDashboard: React.FC = () => {
               <Store className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">15</div>
-              <p className="text-xs text-muted-foreground">3 new this quarter</p>
+              <div className="text-2xl font-bold">{stats.loading ? '...' : stats.totalStores}</div>
+              <p className="text-xs text-muted-foreground">Physical locations</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Stock Alerts</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">23</div>
-              <p className="text-xs text-muted-foreground">Requires attention</p>
+              <div className="text-2xl font-bold text-orange-600">
+                {stats.loading ? '...' : stats.lowStockItems + stats.outOfStockItems}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {stats.outOfStockItems} out of stock, {stats.lowStockItems} low stock
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -74,95 +86,19 @@ export const AdminDashboard: React.FC = () => {
           </TabsList>
           
           <TabsContent value="products" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Product Management</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Create, edit, and manage your jewelry products with detailed specifications.
-                  </p>
-                  <Badge variant="secondary" className="mb-2">
-                    Coming Soon - Full CRUD Interface
-                  </Badge>
-                  <div className="text-sm text-muted-foreground">
-                    Features: Product creation, image uploads, stock management, SEO optimization
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <ProductManagement />
           </TabsContent>
           
           <TabsContent value="collections" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Collection Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Gem className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Collection Management</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Organize products into beautiful collections and manage banner images.
-                  </p>
-                  <Badge variant="secondary" className="mb-2">
-                    Coming Soon - Collection Builder
-                  </Badge>
-                  <div className="text-sm text-muted-foreground">
-                    Features: Collection creation, banner uploads, product assignment
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <CollectionManagement />
           </TabsContent>
           
           <TabsContent value="stores" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Store Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Store className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Store Locator Management</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Manage store locations, contact details, and operating hours.
-                  </p>
-                  <Badge variant="secondary" className="mb-2">
-                    Coming Soon - Store Manager
-                  </Badge>
-                  <div className="text-sm text-muted-foreground">
-                    Features: Store creation, location mapping, contact management
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <StoreManagement />
           </TabsContent>
           
           <TabsContent value="stock" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Stock Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Inventory Control</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Monitor stock levels, set alerts, and manage inventory across all locations.
-                  </p>
-                  <Badge variant="secondary" className="mb-2">
-                    Coming Soon - Stock Tracker
-                  </Badge>
-                  <div className="text-sm text-muted-foreground">
-                    Features: Stock alerts, bulk updates, inventory reports
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <StockManagement />
           </TabsContent>
         </Tabs>
       </div>
