@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { uploadImageAndGetUrl } from '@/lib/upload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -89,7 +90,25 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    (async () => {
+      try {
+        // Upload any selected files from a hidden input if present
+        const fileInput = document.getElementById('product-images-file') as HTMLInputElement | null;
+        const files = fileInput?.files ? Array.from(fileInput.files) : [];
+        const uploaded: string[] = [];
+        for (const f of files) {
+          const url = await uploadImageAndGetUrl(f);
+          if (url) uploaded.push(url);
+        }
+        const next = { ...formData } as any;
+        if (!Array.isArray(next.images)) next.images = [];
+        if (uploaded.length > 0) next.images = [...uploaded, ...next.images];
+        onSubmit(next);
+      } catch (_err) {
+        // Fallback to submitting current formData without new uploads
+        onSubmit(formData);
+      }
+    })();
   };
 
   return (
@@ -233,6 +252,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
+              <div className="p-2 border rounded">
+                <Label htmlFor="product-images-file">Upload images</Label>
+                <input id="product-images-file" type="file" multiple accept="image/*" className="mt-2" />
+              </div>
               {formData.images.map((image: string, index: number) => (
                 <div key={index} className="flex items-center gap-2 p-2 border rounded">
                   <img src={image} alt={`Product ${index + 1}`} className="w-12 h-12 object-cover rounded" />
