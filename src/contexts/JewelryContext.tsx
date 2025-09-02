@@ -5,7 +5,7 @@ import productNecklace from '@/assets/product-necklace.jpg';
 import productBangles from '@/assets/product-bangles.jpg';
 
 export interface JewelryItem {
-  id: number;
+  id: number | string;
   name: string;
   collection: string;
   image: string;
@@ -331,10 +331,44 @@ const jewelryData: JewelryItem[] = [
 ];
 
 export const JewelryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [items] = useState<JewelryItem[]>(jewelryData);
+  const [items, setItems] = useState<JewelryItem[]>(jewelryData);
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [filteredItems, setFilteredItems] = useState<JewelryItem[]>(items);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Fetch dynamic products from API and merge with static items
+    let cancelled = false;
+    (async () => {
+      try {
+        const { apiGet } = await import('@/lib/api');
+        const products = await apiGet<any[]>('/products');
+        const mapped: JewelryItem[] = (products || []).map((p, idx) => ({
+          id: p.id || `db-${idx}`,
+          name: p.name || 'Product',
+          collection: p.collection?.name || p.collection?.handle || 'General',
+          image: (Array.isArray(p.images) && p.images[0]) || '',
+          material: p.material ? String(p.material) : 'Gold',
+          type: p.type ? String(p.type) : 'Rings',
+          occasion: p.occasion ? String(p.occasion) : 'Daily Wear',
+          priceRange: '',
+          priceMin: 0,
+          priceMax: 0,
+          isNew: true,
+          featured: !!p.featured,
+          popular: !!p.most_loved,
+          isFavorite: false,
+          sku: p.sku || '',
+          description: p.description || ''
+        }));
+        if (!cancelled) setItems([...jewelryData, ...mapped]);
+      } catch (_err) {
+        // ignore fetch errors; fall back to static
+        if (!cancelled) setItems([...jewelryData]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const updateFilter = (key: keyof FilterState, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));

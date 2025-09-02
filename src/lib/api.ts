@@ -1,37 +1,3 @@
-export const API_BASE = (import.meta as any).env?.VITE_API_URL?.replace(/\/$/,'') || '';
-
-export async function withAuth(): Promise<HeadersInit> {
-  const { supabase } = await import('@/integrations/supabase/client');
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-export async function apiGet<T>(path: string): Promise<T> {
-  const headers = await withAuth();
-  const res = await fetch(`${API_BASE}${path}`, { headers: { Accept: 'application/json', ...headers } });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-export async function apiJson<T>(path: string, method: 'POST'|'PUT'|'DELETE', body?: unknown): Promise<T> {
-  const headers = await withAuth();
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    body: body ? JSON.stringify(body) : undefined,
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers },
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return (res.status === 204 ? undefined : await res.json()) as T;
-}
-
-export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
-  const headers = await withAuth();
-  const res = await fetch(`${API_BASE}${path}`, { method: 'POST', body: form, headers });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
 function resolveBaseUrl(): string {
   const raw = (import.meta as any).env?.VITE_API_URL?.trim();
   if (!raw) {
