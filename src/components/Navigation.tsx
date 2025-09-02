@@ -1,17 +1,30 @@
 import { useState, useRef, useEffect } from 'react';
-import { Menu, X, Search, MapPin, X as XIcon } from 'lucide-react';
+import { Menu, X, Search, MapPin, X as XIcon, User, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useJewelry } from '@/contexts/JewelryContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { AuthDialog } from '@/components/auth/AuthDialog';
+import { Link } from 'react-router-dom';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [authDialogTab, setAuthDialogTab] = useState<'login' | 'signup'>('login');
   const searchRef = useRef<HTMLDivElement>(null);
   const { filters, updateFilter, resetFilters, items } = useJewelry();
+  const { user, isAdmin, logout, loading } = useAuth();
 
   const menuCategories = {
     'By Type': ['Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Bangles'],
@@ -122,6 +135,20 @@ const Navigation = () => {
     }
   };
 
+  const handleLogin = () => {
+    setAuthDialogTab('login');
+    setShowAuthDialog(true);
+  };
+
+  const handleSignup = () => {
+    setAuthDialogTab('signup');
+    setShowAuthDialog(true);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
   return (
     <nav className="bg-background shadow-soft sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -214,6 +241,64 @@ const Navigation = () => {
               <MapPin className="h-4 w-4 mr-2" />
               Store Locator
             </Button>
+
+            {/* Authentication Section */}
+            {loading ? (
+              <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            ) : user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="border-primary/20">
+                    <User className="w-4 h-4 mr-2" />
+                    Account
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium text-sm">{user.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isAdmin ? 'Administrator' : 'Customer'}
+                      </p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="cursor-pointer">
+                          <Settings className="w-4 h-4 mr-2" />
+                          Admin Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleLogin}
+                  variant="outline" 
+                  size="sm"
+                  className="border-primary/20 hover:bg-primary/10"
+                >
+                  Login
+                </Button>
+                <Button 
+                  onClick={handleSignup}
+                  size="sm"
+                  className="gradient-gold text-primary-foreground hover:opacity-90"
+                >
+                  Sign Up
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -311,6 +396,12 @@ const Navigation = () => {
           </div>
         )}
       </div>
+      
+      <AuthDialog 
+        isOpen={showAuthDialog}
+        onClose={() => setShowAuthDialog(false)}
+        defaultTab={authDialogTab}
+      />
     </nav>
   );
 };
