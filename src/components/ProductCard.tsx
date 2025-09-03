@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface ProductCardProps {
-  id: number;
+  id: string | number;
   name: string;
   collection: string;
   image: string;

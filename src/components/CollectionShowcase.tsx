@@ -1,15 +1,18 @@
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useJewelry } from '@/contexts/JewelryContext';
+import { useCollections } from '@/hooks/useCollections';
 import bridalImage from '@/assets/collection-bridal.jpg';
 import heroImage from '@/assets/hero-jewelry.jpg';
 
 const CollectionShowcase = () => {
   const { updateFilter } = useJewelry();
+  const { collections: dbCollections, loading } = useCollections();
 
-  const collections = [
+  // Static sample collections
+  const sampleCollections = [
     {
-      id: 1,
+      id: 'sample-1',
       name: "Bridal Collection",
       description: "Exquisite designs for your most precious moments. Crafted with traditional artistry and modern elegance.",
       image: bridalImage,
@@ -18,7 +21,7 @@ const CollectionShowcase = () => {
       filterValue: "Bridal"
     },
     {
-      id: 2,
+      id: 'sample-2',
       name: "Daily Elegance",
       description: "Sophisticated pieces that complement your everyday style with understated luxury.",
       image: heroImage,
@@ -27,6 +30,19 @@ const CollectionShowcase = () => {
       filterValue: "Daily Wear"
     }
   ];
+
+  // Merge database collections with samples
+  const dynamicCollections = dbCollections.map((col) => ({
+    id: col.id,
+    name: col.name,
+    description: col.description || "Beautiful collection of handcrafted jewelry pieces.",
+    image: col.banner_image || heroImage,
+    itemCount: "New Collection",
+    featured: false,
+    filterValue: col.name
+  }));
+
+  const allCollections = [...sampleCollections, ...dynamicCollections];
 
   const handleCollectionClick = (filterValue: string) => {
     updateFilter('occasions', [filterValue]);
@@ -52,7 +68,12 @@ const CollectionShowcase = () => {
 
         {/* Collections Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {collections.map((collection, index) => (
+          {loading ? (
+            <div className="col-span-2 flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            allCollections.map((collection, index) => (
             <div
               key={collection.id}
               className={`relative overflow-hidden rounded-2xl shadow-elegant group ${
@@ -98,7 +119,8 @@ const CollectionShowcase = () => {
                 </div>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
 
         {/* Call to Action */}
