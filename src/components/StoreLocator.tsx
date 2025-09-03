@@ -1,47 +1,69 @@
 import { MapPin, Phone, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useStores } from '@/hooks/useStores';
 import StoreMap from './StoreMap';
 
 const StoreLocator = () => {
-  const stores = [
+  const { stores: dbStores, loading } = useStores();
+  
+  // Static sample stores
+  const sampleStores = [
     {
-      id: 1,
-      name: "Elegance Flagship Store",
+      id: 'sample-1',
+      store_name: "Elegance Flagship Store",
       address: "123 Gold Street, Jewelry District, Mumbai 400001",
       phone: "+91 98765 43210",
       hours: "Mon-Sat: 10:00 AM - 9:00 PM, Sun: 11:00 AM - 8:00 PM",
+      city: "Mumbai",
       type: "Flagship Store",
       featured: true
     },
     {
-      id: 2,
-      name: "Elegance Delhi Showroom",
+      id: 'sample-2', 
+      store_name: "Elegance Delhi Showroom",
       address: "456 Diamond Plaza, Connaught Place, New Delhi 110001",
       phone: "+91 98765 43211",
       hours: "Mon-Sat: 10:30 AM - 9:30 PM, Sun: 11:00 AM - 8:00 PM",
+      city: "Delhi",
       type: "Premium Showroom",
       featured: false
     },
     {
-      id: 3,
-      name: "Elegance Bangalore Store",
+      id: 'sample-3',
+      store_name: "Elegance Bangalore Store", 
       address: "789 Brigade Road, MG Road Area, Bangalore 560001",
       phone: "+91 98765 43212",
       hours: "Mon-Sun: 10:00 AM - 9:00 PM",
-      type: "City Store",
+      city: "Bangalore",
+      type: "City Store", 
       featured: false
     },
     {
-      id: 4,
-      name: "Elegance Chennai Boutique",
-      address: "321 Express Avenue, Royapettah, Chennai 600014",
+      id: 'sample-4',
+      store_name: "Elegance Chennai Boutique",
+      address: "321 Express Avenue, Royapettah, Chennai 600014", 
       phone: "+91 98765 43213",
       hours: "Mon-Sat: 10:00 AM - 9:00 PM, Sun: 12:00 PM - 8:00 PM",
+      city: "Chennai",
       type: "Boutique Store",
       featured: false
     }
   ];
+
+  // Merge database stores with samples
+  const dynamicStores = dbStores.map((store) => ({
+    id: store.id,
+    store_name: store.store_name,
+    address: store.address || 'Address not provided',
+    phone: store.phone || 'Phone not provided', 
+    hours: store.hours || 'Hours not provided',
+    city: store.city || '',
+    type: 'Store',
+    featured: false
+  }));
+
+  const allStores = [...sampleStores, ...dynamicStores];
 
   return (
     <section id="store-locator" className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
@@ -70,7 +92,12 @@ const StoreLocator = () => {
 
         {/* Stores Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stores.map((store) => (
+          {loading ? (
+            <div className="col-span-4 flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            allStores.map((store) => (
             <Card 
               key={store.id} 
               className={`shadow-soft hover:shadow-elegant transition-elegant ${
@@ -81,7 +108,7 @@ const StoreLocator = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-lg font-serif text-foreground line-clamp-1">
-                      {store.name}
+                      {store.store_name}
                     </CardTitle>
                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-2 ${
                       store.featured 
@@ -137,7 +164,8 @@ const StoreLocator = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            ))
+          )}
         </div>
 
         {/* Additional Info */}

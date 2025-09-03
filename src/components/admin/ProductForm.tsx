@@ -97,7 +97,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         const files = fileInput?.files ? Array.from(fileInput.files) : [];
         const uploaded: string[] = [];
         for (const f of files) {
-          const url = await uploadImageAndGetUrl(f);
+          const url = await uploadImageAndGetUrl(f, 'product-images');
           if (url) uploaded.push(url);
         }
         const next = { ...formData } as any;

@@ -1,10 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export async function uploadImageAndGetUrl(file?: File): Promise<string | undefined> {
+export async function uploadImageAndGetUrl(file?: File, bucket: string = 'product-images'): Promise<string | undefined> {
   if (!file) return undefined;
   const form = new FormData();
   form.append('file', file);
-  form.append('bucket', 'product-images');
+  form.append('bucket', bucket);
 
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
