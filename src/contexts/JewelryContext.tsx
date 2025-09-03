@@ -337,24 +337,28 @@ export const JewelryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch dynamic products from API and merge with static items
+    // Fetch dynamic products from Supabase and merge with static items
     let cancelled = false;
     (async () => {
       try {
-        const { apiGet } = await import('@/lib/api');
-        const products = await apiGet<any[]>('/products');
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: products } = await supabase
+          .from('products')
+          .select('*, collections(name, handle)')
+          .eq('is_deleted', false);
+          
         const mapped: JewelryItem[] = (products || []).map((p, idx) => ({
           id: p.id || `db-${idx}`,
           name: p.name || 'Product',
-          collection: p.collection?.name || p.collection?.handle || 'General',
+          collection: p.collections?.name || p.collections?.handle || 'General',
           image: (Array.isArray(p.images) && p.images[0]) || '',
-          material: p.material ? String(p.material) : 'Gold',
-          type: p.type ? String(p.type) : 'Rings',
-          occasion: p.occasion ? String(p.occasion) : 'Daily Wear',
+          material: p.material ? String(p.material).charAt(0).toUpperCase() + String(p.material).slice(1) : 'Gold',
+          type: p.type ? String(p.type).charAt(0).toUpperCase() + String(p.type).slice(1) : 'Rings',
+          occasion: p.occasion ? String(p.occasion).charAt(0).toUpperCase() + String(p.occasion).slice(1) : 'Daily Wear',
           priceRange: '',
           priceMin: 0,
           priceMax: 0,
-          isNew: true,
+          isNew: !!p.new_arrival,
           featured: !!p.featured,
           popular: !!p.most_loved,
           isFavorite: false,
