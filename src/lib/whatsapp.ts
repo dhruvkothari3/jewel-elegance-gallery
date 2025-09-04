@@ -31,10 +31,8 @@ export const generateWhatsAppMessage = (product: WhatsAppProduct): string => {
   return message;
 };
 
-export const openWhatsAppChat = (product: WhatsAppProduct): void => {
+export const getWhatsAppUrl = (product: WhatsAppProduct): string => {
   const message = generateWhatsAppMessage(product);
   const encodedMessage = encodeURIComponent(message);
-  const whatsappUrl = `https://wa.me/918369543332?text=${encodedMessage}`;
-  
-  window.open(whatsappUrl, '_blank');
+  return `https://wa.me/918369543332?text=${encodedMessage}`;
 };

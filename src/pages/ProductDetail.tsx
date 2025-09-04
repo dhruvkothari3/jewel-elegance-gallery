@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import Navigation from '@/components/Navigation';
 import { useJewelry } from '@/contexts/JewelryContext';
-import { openWhatsAppChat } from '@/lib/whatsapp';
+import { getWhatsAppUrl } from '@/lib/whatsapp';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -14,17 +14,6 @@ const ProductDetail = () => {
   const { items } = useJewelry();
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
-
-  const handleWhatsAppInquiry = () => {
-    if (product) {
-      openWhatsAppChat({
-        name: product.name,
-        description: product.description,
-        priceRange: product.priceRange,
-        images: enhancedProduct.images
-      });
-    }
-  };
 
   const product = items.find(item => item.id === parseInt(id || '1'));
 
@@ -59,6 +48,13 @@ const ProductDetail = () => {
       "Price Range": product.priceRange
     }
   };
+
+  const whatsappUrl = getWhatsAppUrl({
+    name: product.name,
+    description: product.description,
+    priceRange: product.priceRange,
+    images: enhancedProduct.images
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -135,15 +131,15 @@ const ProductDetail = () => {
                   >
                     <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleWhatsAppInquiry}
-                    className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center h-9 px-3 rounded-md text-sm font-medium bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 transition-colors"
                     title="WhatsApp Inquiry"
                   >
                     <MessageCircle className="h-4 w-4" />
-                  </Button>
+                  </a>
                   <Button variant="outline" size="sm">
                     <Share2 className="h-4 w-4" />
                   </Button>
