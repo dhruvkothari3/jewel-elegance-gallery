@@ -34,5 +34,5 @@ export const generateWhatsAppMessage = (product: WhatsAppProduct): string => {
 export const getWhatsAppUrl = (product: WhatsAppProduct): string => {
   const message = generateWhatsAppMessage(product);
   const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/918369543332?text=${encodedMessage}`;
+  return `https://api.whatsapp.com/send?phone=918369543332&text=${encodedMessage}`;
 };

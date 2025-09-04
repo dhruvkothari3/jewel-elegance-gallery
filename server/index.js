@@ -19,6 +19,13 @@ app.use(morgan('dev'));
 const allowedOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({ origin: allowedOrigin, credentials: false }));
 
+// Security headers for external navigation
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  next();
+});
+
 // Routes
 app.get('/', (req, res) => res.json({ ok: true, name: 'Jewel Elegance Gallery API', version: '1.0.0' }));
 app.use('/api/products', productRoutes);
