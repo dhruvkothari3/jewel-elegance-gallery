@@ -87,7 +87,6 @@ const ProductCard = ({
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-elegant transition-colors"
               title="WhatsApp Inquiry"
-              onClick={(e) => e.stopPropagation()}
             >
               <MessageCircle className="h-4 w-4" />
             </a>
@@ -101,7 +100,6 @@ const ProductCard = ({
           rel="noopener noreferrer"
           className="absolute bottom-3 right-3 inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-elegant opacity-0 group-hover:opacity-100 transition-elegant"
           title="WhatsApp Inquiry"
-          onClick={(e) => e.stopPropagation()}
         >
           <MessageCircle className="h-4 w-4" />
         </a>
