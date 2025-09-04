@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, Share2, MapPin, Eye, Sparkles } from 'lucide-react';
+import { ArrowLeft, Heart, Share2, MapPin, Eye, Sparkles, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import Navigation from '@/components/Navigation';
 import { useJewelry } from '@/contexts/JewelryContext';
+import { openWhatsAppChat } from '@/lib/whatsapp';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -13,6 +14,17 @@ const ProductDetail = () => {
   const { items } = useJewelry();
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+
+  const handleWhatsAppInquiry = () => {
+    if (product) {
+      openWhatsAppChat({
+        name: product.name,
+        description: product.description,
+        priceRange: product.priceRange,
+        images: enhancedProduct.images
+      });
+    }
+  };
 
   const product = items.find(item => item.id === parseInt(id || '1'));
 
@@ -122,6 +134,15 @@ const ProductDetail = () => {
                     className={isFavorite ? 'bg-red-50 text-red-500 border-red-200' : ''}
                   >
                     <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleWhatsAppInquiry}
+                    className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                    title="WhatsApp Inquiry"
+                  >
+                    <MessageCircle className="h-4 w-4" />
                   </Button>
                   <Button variant="outline" size="sm">
                     <Share2 className="h-4 w-4" />

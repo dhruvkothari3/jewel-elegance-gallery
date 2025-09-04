@@ -1,7 +1,8 @@
-import { Heart, Eye, MapPin } from 'lucide-react';
+import { Heart, Eye, MapPin, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { openWhatsAppChat } from '@/lib/whatsapp';
 
 interface ProductCardProps {
   id: string | number;
@@ -40,6 +41,16 @@ const ProductCard = ({
     navigate(`/product/${id}`);
   };
 
+  const handleWhatsAppInquiry = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    openWhatsAppChat({
+      name,
+      description,
+      priceRange,
+      images: [image] // Using the main image, can be expanded to multiple images
+    });
+  };
+
   const isLargeView = viewMode === 'large';
 
   return (
@@ -73,8 +84,27 @@ const ProductCard = ({
             >
               <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current text-red-500' : ''}`} />
             </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="rounded-full shadow-elegant bg-green-500 hover:bg-green-600 text-white border-green-500"
+              onClick={handleWhatsAppInquiry}
+              title="WhatsApp Inquiry"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </Button>
           </div>
         </div>
+
+        {/* WhatsApp button at bottom-right corner */}
+        <Button
+          size="sm"
+          className="absolute bottom-3 right-3 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-elegant opacity-0 group-hover:opacity-100 transition-elegant"
+          onClick={handleWhatsAppInquiry}
+          title="WhatsApp Inquiry"
+        >
+          <MessageCircle className="h-4 w-4" />
+        </Button>
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col space-y-1">
