@@ -1,4 +1,5 @@
 interface WhatsAppProduct {
+  id: number; // 👈 added this
   name: string;
   description?: string;
   priceRange?: string;
@@ -6,28 +7,23 @@ interface WhatsAppProduct {
 }
 
 export const generateWhatsAppMessage = (product: WhatsAppProduct): string => {
-  const { name, description, priceRange, images } = product;
-  
+  const { id, name, description, priceRange } = product;
+
   let message = `Hi, I'm interested in this jewellery. Here are the details:\n\n`;
   message += `- Product: ${name}\n`;
-  
+
   if (description) {
     message += `- Description: ${description}\n`;
   }
-  
+
   if (priceRange) {
     message += `- Price: ${priceRange}\n`;
   }
-  
-  if (images && images.length > 0) {
-    message += `- Images:\n`;
-    images.forEach(imageUrl => {
-      if (imageUrl) {
-        message += `${imageUrl}\n`;
-      }
-    });
-  }
-  
+
+  // 👇 Instead of images, add product link
+  const productUrl = `${window.location.origin}/product/${id}`;
+  message += `\nView product: ${productUrl}`;
+
   return message;
 };
 
