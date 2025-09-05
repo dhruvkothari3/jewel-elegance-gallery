@@ -50,6 +50,7 @@ const ProductDetail = () => {
   };
 
   const whatsappUrl = getWhatsAppUrl({
+    id: parseInt(id || '0') || 0,
     name: product.name,
     description: product.description,
     priceRange: product.priceRange,

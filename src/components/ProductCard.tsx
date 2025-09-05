@@ -42,10 +42,11 @@ const ProductCard = ({
   };
 
   const whatsappUrl = getWhatsAppUrl({
+    id: parseInt(id.toString()) || 0,
     name,
     description,
     priceRange,
-    images: [image] // Using the main image, can be expanded to multiple images
+    images: [image]
   });
 
   const isLargeView = viewMode === 'large';

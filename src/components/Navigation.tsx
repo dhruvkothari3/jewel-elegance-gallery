@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Menu, X, Search, MapPin, X as XIcon, User, LogOut, Settings } from 'lucide-react';
+import { Menu, X, Search, MapPin, X as XIcon, User, LogOut, Settings, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import {
 import { useJewelry } from '@/contexts/JewelryContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthDialog } from '@/components/auth/AuthDialog';
+import { useWishlist } from '@/hooks/useWishlist';
 import { Link } from 'react-router-dom';
 
 const Navigation = () => {
@@ -25,6 +26,7 @@ const Navigation = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const { filters, updateFilter, resetFilters, items } = useJewelry();
   const { user, isAdmin, logout, loading } = useAuth();
+  const { wishlistCount } = useWishlist();
 
   const menuCategories = {
     'By Type': ['Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Bangles'],
@@ -232,15 +234,31 @@ const Navigation = () => {
                 </div>
               )}
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-              onClick={scrollToStoreLocator}
-            >
-              <MapPin className="h-4 w-4 mr-2" />
-              Store Locator
-            </Button>
+              <Link to="/wishlist">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground relative"
+                >
+                  <Heart className="h-4 w-4 mr-2" />
+                  Wishlist
+                  {wishlistCount > 0 && (
+                    <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
+                      {wishlistCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                onClick={scrollToStoreLocator}
+              >
+                <MapPin className="h-4 w-4 mr-2" />
+                Store Locator
+              </Button>
 
             {/* Authentication Section */}
             {loading ? (
