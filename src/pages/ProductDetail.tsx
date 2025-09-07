@@ -7,13 +7,17 @@ import { Separator } from '@/components/ui/separator';
 import Navigation from '@/components/Navigation';
 import { useJewelry } from '@/contexts/JewelryContext';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
+import { useWishlist } from '@/hooks/useWishlist';
+import { useToast } from '@/hooks/use-toast';
+import ScheduleViewingDialog from '@/components/ScheduleViewingDialog';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { items } = useJewelry();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { toast } = useToast();
   const [selectedImage, setSelectedImage] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
 
   const product = items.find(item => item.id === parseInt(id || '1'));
 
@@ -56,6 +60,42 @@ const ProductDetail = () => {
     priceRange: product.priceRange,
     images: enhancedProduct.images
   });
+
+  const handleWishlistToggle = async () => {
+    const productId = id || '0';
+    if (isInWishlist(productId)) {
+      await removeFromWishlist(productId);
+    } else {
+      await addToWishlist(productId);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: product.name,
+      text: product.description,
+      url: window.location.href
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link Copied!",
+          description: "Product link has been copied to your clipboard.",
+        });
+      } catch (err) {
+        console.log('Error copying to clipboard:', err);
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -127,10 +167,10 @@ const ProductDetail = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsFavorite(!isFavorite)}
-                    className={isFavorite ? 'bg-red-50 text-red-500 border-red-200' : ''}
+                    onClick={handleWishlistToggle}
+                    className={isInWishlist(id || '0') ? 'bg-red-50 text-red-500 border-red-200' : ''}
                   >
-                    <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                    <Heart className={`h-4 w-4 ${isInWishlist(id || '0') ? 'fill-current' : ''}`} />
                   </Button>
                   <a
                     href={whatsappUrl}
@@ -141,7 +181,7 @@ const ProductDetail = () => {
                   >
                     <MessageCircle className="h-4 w-4" />
                   </a>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={handleShare}>
                     <Share2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -212,27 +252,45 @@ const ProductDetail = () => {
             {/* Actions */}
             <div className="space-y-4 pt-4">
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  size="lg" 
-                  variant="elegant"
-                  className="flex-1 shadow-gold hover:shadow-elegant"
+                <a 
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1"
                 >
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Enquire at Store
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  className="flex-1 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Schedule Viewing
-                </Button>
+                  <Button 
+                    size="lg" 
+                    variant="elegant"
+                    className="w-full shadow-gold hover:shadow-elegant"
+                  >
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Enquire at Store
+                  </Button>
+                </a>
+                <ScheduleViewingDialog
+                  productId={id}
+                  productName={product.name}
+                  trigger={
+                    <Button 
+                      variant="outline" 
+                      size="lg"
+                      className="flex-1 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Schedule Viewing
+                    </Button>
+                  }
+                />
               </div>
               
               <div className="text-center text-sm text-muted-foreground">
                 <p>Prices may vary based on current gold rates and customization</p>
-                <p className="font-medium text-primary">Call +91 98765 43210 for exact pricing</p>
+                <a 
+                  href="tel:+919876543210"
+                  className="font-medium text-primary hover:underline"
+                >
+                  Call +91 98765 43210 for exact pricing
+                </a>
               </div>
             </div>
           </div>

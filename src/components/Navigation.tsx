@@ -192,9 +192,9 @@ const Navigation = () => {
                   </div>
                 </div>
               ))}
-              <a href="#collections" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-smooth">
+              <Link to="/collections" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-smooth">
                 Collections
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -319,8 +319,43 @@ const Navigation = () => {
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
+          {/* Mobile Search and Menu */}
+          <div className="md:hidden flex items-center space-x-2">
+            <div className="relative" ref={searchRef}>
+              <Input
+                type="search"
+                placeholder="Search..."
+                value={filters.search}
+                onChange={handleSearchChange}
+                onFocus={() => filters.search.trim() && setShowSearchSuggestions(true)}
+                className="pl-8 pr-4 py-2 w-32 border-border focus:ring-2 focus:ring-primary/20"
+              />
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              {filters.search && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
+                >
+                  <XIcon className="h-3 w-3" />
+                </button>
+              )}
+              
+              {/* Mobile Search Suggestions */}
+              {showSearchSuggestions && searchSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-elegant z-50">
+                  {searchSuggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="block w-full text-left px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-smooth first:rounded-t-lg last:rounded-b-lg"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            
             <Button
               variant="ghost"
               size="sm"
@@ -394,6 +429,34 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-border">
             <div className="px-2 pt-2 pb-3 space-y-1">
+              {/* Quick Links */}
+              <div className="space-y-1 mb-4">
+                <Link to="/collections" className="block px-3 py-2 text-base font-medium text-foreground hover:text-primary">
+                  Collections
+                </Link>
+                <Link to="/stores" className="block px-3 py-2 text-base font-medium text-foreground hover:text-primary">
+                  Stores
+                </Link>
+                <Link to="/about" className="block px-3 py-2 text-base font-medium text-foreground hover:text-primary">
+                  About
+                </Link>
+                <Link to="/contact" className="block px-3 py-2 text-base font-medium text-foreground hover:text-primary">
+                  Contact
+                </Link>
+                <Link to="/wishlist" className="block px-3 py-2 text-base font-medium text-foreground hover:text-primary">
+                  <Heart className="inline h-4 w-4 mr-2" />
+                  Wishlist ({wishlistCount})
+                </Link>
+                <button 
+                  onClick={scrollToStoreLocator}
+                  className="block w-full text-left px-3 py-2 text-base font-medium text-foreground hover:text-primary"
+                >
+                  <MapPin className="inline h-4 w-4 mr-2" />
+                  Store Locator
+                </button>
+              </div>
+              
+              {/* Category Filters */}
               {Object.entries(menuCategories).map(([category, items]) => (
                 <div key={category} className="space-y-1">
                   <button className="block text-left w-full px-3 py-2 text-base font-medium text-foreground border-b border-muted">

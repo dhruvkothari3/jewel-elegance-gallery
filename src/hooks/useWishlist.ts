@@ -21,6 +21,7 @@ interface WishlistItem {
 export const useWishlist = () => {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -74,6 +75,33 @@ export const useWishlist = () => {
       return false;
     }
 
+    // Check if this is a static product (numeric ID) or database product (UUID)
+    const isStaticProduct = /^\d+$/.test(productId);
+    
+    if (isStaticProduct) {
+      // For static products, we'll store them in localStorage as a fallback
+      // since they don't exist in the database
+      const staticWishlist = JSON.parse(localStorage.getItem('staticWishlist') || '[]');
+      if (!staticWishlist.includes(productId)) {
+        staticWishlist.push(productId);
+        localStorage.setItem('staticWishlist', JSON.stringify(staticWishlist));
+        toast({
+          title: "Added to Wishlist",
+          description: "Item has been added to your wishlist.",
+        });
+        // Refresh the wishlist count
+        setRefreshTrigger(prev => prev + 1);
+        return true;
+      } else {
+        toast({
+          title: "Already in Wishlist",
+          description: "This item is already in your wishlist.",
+          variant: "destructive"
+        });
+        return false;
+      }
+    }
+
     try {
       const { error } = await supabase
         .from('wishlists')
@@ -111,6 +139,23 @@ export const useWishlist = () => {
   const removeFromWishlist = async (productId: string) => {
     if (!user) return false;
 
+    // Check if this is a static product (numeric ID) or database product (UUID)
+    const isStaticProduct = /^\d+$/.test(productId);
+    
+    if (isStaticProduct) {
+      // For static products, remove from localStorage
+      const staticWishlist = JSON.parse(localStorage.getItem('staticWishlist') || '[]');
+      const updatedWishlist = staticWishlist.filter((id: string) => id !== productId);
+      localStorage.setItem('staticWishlist', JSON.stringify(updatedWishlist));
+      toast({
+        title: "Removed from Wishlist",
+        description: "Item has been removed from your wishlist.",
+      });
+      // Refresh the wishlist count
+      setRefreshTrigger(prev => prev + 1);
+      return true;
+    }
+
     try {
       const { error } = await supabase
         .from('wishlists')
@@ -138,12 +183,28 @@ export const useWishlist = () => {
   };
 
   const isInWishlist = (productId: string): boolean => {
-    return wishlistItems.some(item => item.product_id === productId);
+    // Check database wishlist items
+    const inDatabaseWishlist = wishlistItems.some(item => item.product_id === productId);
+    
+    // Check static wishlist items (for products with numeric IDs)
+    const isStaticProduct = /^\d+$/.test(productId);
+    if (isStaticProduct) {
+      const staticWishlist = JSON.parse(localStorage.getItem('staticWishlist') || '[]');
+      return inDatabaseWishlist || staticWishlist.includes(productId);
+    }
+    
+    return inDatabaseWishlist;
   };
 
   useEffect(() => {
     fetchWishlist();
-  }, [user]);
+  }, [user, refreshTrigger]);
+
+  // Calculate total wishlist count including static items
+  const getTotalWishlistCount = () => {
+    const staticWishlist = JSON.parse(localStorage.getItem('staticWishlist') || '[]');
+    return wishlistItems.length + staticWishlist.length;
+  };
 
   return {
     wishlistItems,
@@ -152,6 +213,6 @@ export const useWishlist = () => {
     removeFromWishlist,
     isInWishlist,
     fetchWishlist,
-    wishlistCount: wishlistItems.length
+    wishlistCount: getTotalWishlistCount()
   };
 };

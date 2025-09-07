@@ -1,4 +1,4 @@
-import { Grid3X3, LayoutGrid, List } from 'lucide-react';
+import { Grid3X3, LayoutGrid, List, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import ProductCard from './ProductCard';
@@ -6,7 +6,7 @@ import FilterSidebar from './FilterSidebar';
 import { useJewelry } from '@/contexts/JewelryContext';
 
 const FeaturedProducts = () => {
-  const { filteredItems, filters, updateFilter, isLoading } = useJewelry();
+  const { filteredItems, filters, updateFilter, resetFilters, isLoading } = useJewelry();
 
   const handleSortChange = (value: string) => {
     updateFilter('sortBy', value);
@@ -14,6 +14,14 @@ const FeaturedProducts = () => {
 
   const handleViewModeChange = (mode: 'grid' | 'large') => {
     updateFilter('viewMode', mode);
+  };
+
+  const hasActiveFilters = () => {
+    return filters.search || 
+           filters.materials.length > 0 || 
+           filters.types.length > 0 || 
+           filters.occasions.length > 0 || 
+           filters.collections.length > 0;
   };
 
   const getGridClasses = () => {
@@ -32,16 +40,48 @@ const FeaturedProducts = () => {
         {/* Section Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-12">
           <div>
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-4">
-              Featured Jewelry
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Handpicked pieces from our finest collections
-            </p>
+            {(() => {
+              if (hasActiveFilters()) {
+                return (
+                  <>
+                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-4">
+                      Search Results
+                    </h2>
+                    <p className="text-xl text-muted-foreground">
+                      {filteredItems.length} {filteredItems.length === 1 ? 'product' : 'products'} found
+                    </p>
+                  </>
+                );
+              } else {
+                return (
+                  <>
+                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-4">
+                      Featured Jewelry
+                    </h2>
+                    <p className="text-xl text-muted-foreground">
+                      Handpicked pieces from our finest collections
+                    </p>
+                  </>
+                );
+              }
+            })()}
           </div>
           
           {/* Controls */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-6 lg:mt-0">
+            {/* Clear Filters Button - Show when filters are active */}
+            {hasActiveFilters() && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={resetFilters}
+                className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Clear All Filters
+              </Button>
+            )}
+            
             <Select value={filters.sortBy} onValueChange={handleSortChange}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Sort by" />
@@ -97,6 +137,7 @@ const FeaturedProducts = () => {
         {isLoading ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-3 text-muted-foreground">Loading products...</span>
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-12">
@@ -130,15 +171,27 @@ const FeaturedProducts = () => {
           </div>
         )}
 
-        {/* Load More */}
+        {/* Load More / Clear Filters */}
         <div className="text-center mt-12">
-          <Button 
-            variant="outline" 
-            size="lg"
-            className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-elegant px-12"
-          >
-            View All Products
-          </Button>
+          {hasActiveFilters() ? (
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={resetFilters}
+              className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-elegant px-12"
+            >
+              <X className="h-5 w-5 mr-2" />
+              Clear All Filters
+            </Button>
+          ) : (
+            <Button 
+              variant="outline" 
+              size="lg"
+              className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-elegant px-12"
+            >
+              View All Products
+            </Button>
+          )}
         </div>
       </div>
     </section>

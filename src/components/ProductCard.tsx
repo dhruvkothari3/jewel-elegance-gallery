@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
+import { useWishlist } from '@/hooks/useWishlist';
 
 interface ProductCardProps {
   id: string | number;
@@ -36,9 +37,20 @@ const ProductCard = ({
   viewMode = 'grid'
 }: ProductCardProps) => {
   const navigate = useNavigate();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   const handleViewProduct = () => {
     navigate(`/product/${id}`);
+  };
+
+  const handleWishlistToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const productId = id.toString();
+    if (isInWishlist(productId)) {
+      await removeFromWishlist(productId);
+    } else {
+      await addToWishlist(productId);
+    }
   };
 
   const whatsappUrl = getWhatsAppUrl({
@@ -52,9 +64,12 @@ const ProductCard = ({
   const isLargeView = viewMode === 'large';
 
   return (
-    <Card className={`group overflow-hidden shadow-soft hover:shadow-elegant transition-elegant jewelry-hover bg-card border-border ${
-      isLargeView ? 'h-full' : ''
-    }`}>
+    <Card 
+      className={`group overflow-hidden shadow-soft hover:shadow-elegant transition-elegant jewelry-hover bg-card border-border cursor-pointer hover:border-primary/50 ${
+        isLargeView ? 'h-full' : ''
+      }`}
+      onClick={handleViewProduct}
+    >
       <div className={`relative overflow-hidden ${
         isLargeView ? 'aspect-[4/3]' : 'aspect-square'
       }`}>
@@ -71,7 +86,10 @@ const ProductCard = ({
               size="sm"
               variant="secondary"
               className="rounded-full shadow-elegant"
-              onClick={handleViewProduct}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewProduct();
+              }}
             >
               <Eye className="h-4 w-4" />
             </Button>
@@ -79,13 +97,15 @@ const ProductCard = ({
               size="sm"
               variant="secondary"
               className="rounded-full shadow-elegant"
+              onClick={handleWishlistToggle}
             >
-              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current text-red-500' : ''}`} />
+              <Heart className={`h-4 w-4 ${isInWishlist(id.toString()) ? 'fill-current text-red-500' : ''}`} />
             </Button>
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-elegant transition-colors"
               title="WhatsApp Inquiry"
             >
@@ -99,6 +119,7 @@ const ProductCard = ({
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
           className="absolute bottom-3 right-3 inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-elegant opacity-0 group-hover:opacity-100 transition-elegant"
           title="WhatsApp Inquiry"
         >
@@ -117,12 +138,11 @@ const ProductCard = ({
 
       <CardContent className={`p-4 ${isLargeView ? 'flex-1 flex flex-col' : ''}`}>
         <div 
-          className={`space-y-2 cursor-pointer ${isLargeView ? 'flex-1 flex flex-col' : ''}`}
-          onClick={handleViewProduct}
+          className={`space-y-2 ${isLargeView ? 'flex-1 flex flex-col' : ''}`}
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className={`font-serif font-semibold text-foreground line-clamp-1 hover:text-primary transition-smooth ${
+              <h3 className={`font-serif font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-smooth ${
                 isLargeView ? 'text-xl' : 'text-lg'
               }`}>
                 {name}
@@ -152,18 +172,21 @@ const ProductCard = ({
             <span className={`font-semibold text-primary ${isLargeView ? 'text-xl' : 'text-lg'}`}>
               {priceRange}
             </span>
-            <Button 
-              size={isLargeView ? 'default' : 'sm'}
-              variant="outline"
-              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Handle enquire action
-              }}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
             >
-              <MapPin className={`${isLargeView ? 'h-4 w-4' : 'h-3 w-3'} mr-1`} />
-              Enquire
-            </Button>
+              <Button 
+                size={isLargeView ? 'default' : 'sm'}
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth"
+              >
+                <MapPin className={`${isLargeView ? 'h-4 w-4' : 'h-3 w-3'} mr-1`} />
+                Enquire
+              </Button>
+            </a>
           </div>
         </div>
       </CardContent>

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useAuth } from '@/contexts/AuthContext';
+import { useJewelry } from '@/contexts/JewelryContext';
 import Navigation from '@/components/Navigation';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
 const WishlistPage = () => {
   const { wishlistItems, loading } = useWishlist();
   const { user } = useAuth();
+  const { items } = useJewelry();
 
   if (!user) {
     return (
@@ -82,7 +84,11 @@ const WishlistPage = () => {
             <div>
               <h1 className="text-3xl font-serif font-bold">My Wishlist</h1>
               <p className="text-muted-foreground">
-                {wishlistItems.length} item{wishlistItems.length !== 1 ? 's' : ''} saved for later
+                {(() => {
+                  const staticWishlist = JSON.parse(localStorage.getItem('staticWishlist') || '[]');
+                  const totalCount = wishlistItems.length + staticWishlist.length;
+                  return `${totalCount} item${totalCount !== 1 ? 's' : ''} saved for later`;
+                })()}
               </p>
             </div>
           </div>
@@ -96,28 +102,64 @@ const WishlistPage = () => {
         </div>
 
         {/* Wishlist Items */}
-        {wishlistItems.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {wishlistItems.map((item) => (
-                <ProductCard
-                  key={item.id}
-                  id={item.products.id}
-                  name={item.products.name}
-                  collection={item.products.collection_id || 'Elegance'}
-                  type={item.products.type}
-                  material={item.products.material}
-                  occasion="Special"
-                  image={item.products.images?.[0] || '/src/assets/product-ring.jpg'}
-                  image={item.products.images?.[0] || '/src/assets/product-ring.jpg'}
-                  priceRange="₹25,000 - ₹75,000"
-                  sku=""
-                  description=""
-                  isNew={false}
-                  viewMode="grid"
-                />
-              ))}
-            </div>
+        {(() => {
+          // Get static wishlist items
+          const staticWishlist = JSON.parse(localStorage.getItem('staticWishlist') || '[]');
+          const staticItems = items.filter(item => staticWishlist.includes(item.id.toString()));
+          
+          // Combine database and static items
+          const allWishlistItems = [
+            ...wishlistItems.map(item => ({
+              id: item.products.id,
+              name: item.products.name,
+              collection: item.products.collection_id || 'Elegance',
+              type: item.products.type,
+              material: item.products.material,
+              occasion: 'Special',
+              image: item.products.images?.[0] || '/src/assets/product-ring.jpg',
+              priceRange: '₹25,000 - ₹75,000',
+              sku: '',
+              description: '',
+              isNew: false,
+              isStatic: false
+            })),
+            ...staticItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              collection: item.collection,
+              type: item.type,
+              material: item.material,
+              occasion: item.occasion,
+              image: item.image,
+              priceRange: item.priceRange,
+              sku: item.sku,
+              description: item.description,
+              isNew: item.isNew,
+              isStatic: true
+            }))
+          ];
+
+          return allWishlistItems.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {allWishlistItems.map((item) => (
+                  <ProductCard
+                    key={`${item.isStatic ? 'static' : 'db'}-${item.id}`}
+                    id={item.id}
+                    name={item.name}
+                    collection={item.collection}
+                    type={item.type}
+                    material={item.material}
+                    occasion={item.occasion}
+                    image={item.image}
+                    priceRange={item.priceRange}
+                    sku={item.sku}
+                    description={item.description}
+                    isNew={item.isNew}
+                    viewMode="grid"
+                  />
+                ))}
+              </div>
             
             {/* Action Bar */}
             <div className="mt-12 p-6 bg-accent/50 rounded-lg">
@@ -148,7 +190,7 @@ const WishlistPage = () => {
               </div>
             </div>
           </>
-        ) : (
+          ) : (
           <div className="text-center py-16">
             <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-6" />
             <h2 className="text-2xl font-semibold mb-4">Your wishlist is empty</h2>
@@ -169,7 +211,8 @@ const WishlistPage = () => {
               </Link>
             </div>
           </div>
-        )}
+        );
+        })()}
       </div>
     </div>
   );

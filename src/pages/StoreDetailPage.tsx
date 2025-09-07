@@ -6,13 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import ScheduleViewingDialog from '@/components/ScheduleViewingDialog';
 import { 
   MapPin, 
   Phone, 
@@ -29,15 +25,6 @@ const StoreDetailPage = () => {
   const { stores, loading } = useStores();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isViewingDialogOpen, setIsViewingDialogOpen] = useState(false);
-  const [viewingForm, setViewingForm] = useState({
-    name: '',
-    email: user?.email || '',
-    phone: '',
-    preferred_date: '',
-    preferred_time: '',
-    message: ''
-  });
 
   // Sample stores for demonstration
   const sampleStores = {
@@ -92,66 +79,6 @@ const StoreDetailPage = () => {
   const sampleStore = id ? sampleStores[id as keyof typeof sampleStores] : null;
   const store = dbStore || sampleStore;
 
-  useEffect(() => {
-    if (user) {
-      setViewingForm(prev => ({
-        ...prev,
-        email: user.email || prev.email
-      }));
-    }
-  }, [user]);
-
-  const handleViewingRequest = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!viewingForm.name || !viewingForm.email || !viewingForm.phone || !viewingForm.preferred_date || !viewingForm.preferred_time) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('viewing_requests')
-        .insert([{
-          user_id: user?.id || null,
-          store_id: store?.id,
-          name: viewingForm.name,
-          email: viewingForm.email,
-          phone: viewingForm.phone,
-          preferred_date: viewingForm.preferred_date,
-          preferred_time: viewingForm.preferred_time,
-          message: viewingForm.message
-        }]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Viewing Request Submitted",
-        description: "We'll contact you soon to confirm your appointment.",
-      });
-
-      setIsViewingDialogOpen(false);
-      setViewingForm({
-        name: '',
-        email: user?.email || '',
-        phone: '',
-        preferred_date: '',
-        preferred_time: '',
-        message: ''
-      });
-    } catch (error) {
-      console.error('Error submitting viewing request:', error);
-      toast({
-        title: "Error",
-        description: "Failed to submit viewing request. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const generateWhatsAppMessage = () => {
     if (!store) return '';
@@ -303,6 +230,7 @@ const StoreDetailPage = () => {
             <div className="flex flex-wrap gap-4 pt-6 border-t">
               {store.map_link && (
                 <a 
+                  key="directions"
                   href={store.map_link}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -325,96 +253,15 @@ const StoreDetailPage = () => {
                 </Button>
               </a>
 
-              <Dialog open={isViewingDialogOpen} onOpenChange={setIsViewingDialogOpen}>
-                <DialogTrigger asChild>
+              <ScheduleViewingDialog
+                storeId={store?.id}
+                trigger={
                   <Button variant="outline" className="flex-1 sm:flex-none">
                     <Calendar className="mr-2 h-4 w-4" />
                     Schedule Visit
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Schedule Store Visit</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleViewingRequest} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="name">Name *</Label>
-                        <Input
-                          id="name"
-                          value={viewingForm.name}
-                          onChange={(e) => setViewingForm({...viewingForm, name: e.target.value})}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">Email *</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={viewingForm.email}
-                          onChange={(e) => setViewingForm({...viewingForm, email: e.target.value})}
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="phone">Phone *</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={viewingForm.phone}
-                        onChange={(e) => setViewingForm({...viewingForm, phone: e.target.value})}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="date">Preferred Date *</Label>
-                        <Input
-                          id="date"
-                          type="date"
-                          value={viewingForm.preferred_date}
-                          onChange={(e) => setViewingForm({...viewingForm, preferred_date: e.target.value})}
-                          min={new Date().toISOString().split('T')[0]}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="time">Preferred Time *</Label>
-                        <Input
-                          id="time"
-                          type="time"
-                          value={viewingForm.preferred_time}
-                          onChange={(e) => setViewingForm({...viewingForm, preferred_time: e.target.value})}
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="message">Message (Optional)</Label>
-                      <Textarea
-                        id="message"
-                        value={viewingForm.message}
-                        onChange={(e) => setViewingForm({...viewingForm, message: e.target.value})}
-                        placeholder="Any specific jewelry pieces or collections you're interested in?"
-                      />
-                    </div>
-                    
-                    <div className="flex justify-end gap-3">
-                      <Button type="button" variant="outline" onClick={() => setIsViewingDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button type="submit">
-                        Schedule Visit
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+                }
+              />
             </div>
           </CardContent>
         </Card>
