@@ -22,6 +22,19 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  // Move useMemo to top to ensure consistent hook order
+  const whatsappUrl = useMemo(() => {
+    if (!product || !id) return '';
+    const images: string[] = Array.isArray(product.images) ? product.images : [];
+    return getWhatsAppUrl({
+      id: id || '',
+      name: product.name,
+      description: product.description || '',
+      priceRange: '',
+      images: images.length > 0 ? images : [''],
+    });
+  }, [id, product?.name, product?.description, product?.images]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -83,16 +96,6 @@ const ProductDetail = () => {
 
   const images: string[] = Array.isArray(product.images) ? product.images : [];
   const primaryImage = images[selectedImage] || images[0] || '';
-
-  const whatsappUrl = useMemo(() => {
-    return getWhatsAppUrl({
-      id: id || '',
-      name: product.name,
-      description: product.description || '',
-      priceRange: '',
-      images: images.length > 0 ? images : [''],
-    });
-  }, [id, product.name, product.description, images]);
 
   const handleWishlistToggle = async () => {
     const productId = id || '0';
