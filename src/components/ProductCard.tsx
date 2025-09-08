@@ -40,7 +40,10 @@ const ProductCard = ({
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   const handleViewProduct = () => {
-    navigate(`/product/${id}`);
+    // Ensure ID is properly formatted for navigation
+    const productId = typeof id === 'string' ? id : id.toString();
+    console.log('Navigating to product:', productId);
+    navigate(`/product/${productId}`);
   };
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {

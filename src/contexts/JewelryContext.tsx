@@ -348,22 +348,22 @@ export const JewelryProvider: React.FC<{ children: React.ReactNode }> = ({ child
           .eq('is_deleted', false);
           
         const mapped: JewelryItem[] = (products || []).map((p, idx) => ({
-          id: p.id || `db-${idx}`,
+          id: p.id, // Use actual UUID from Supabase
           name: p.name || 'Product',
           collection: p.collections?.name || p.collections?.handle || 'General',
-          image: (Array.isArray(p.images) && p.images[0]) || '',
-          material: p.material ? String(p.material).charAt(0).toUpperCase() + String(p.material).slice(1) : 'Gold',
-          type: p.type ? String(p.type).charAt(0).toUpperCase() + String(p.type).slice(1) : 'Rings',
-          occasion: p.occasion ? String(p.occasion).charAt(0).toUpperCase() + String(p.occasion).slice(1) : 'Daily Wear',
-          priceRange: '',
+          image: (Array.isArray(p.images) && p.images.length > 0 && p.images[0]) || '/placeholder.svg',
+          material: p.material ? String(p.material).replace('_', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Gold',
+          type: p.type ? String(p.type).replace('_', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Rings',
+          occasion: p.occasion ? String(p.occasion).replace('_', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Daily Wear',
+          priceRange: 'Price on request',
           priceMin: 0,
-          priceMax: 0,
+          priceMax: 999999,
           isNew: !!p.new_arrival,
           featured: !!p.featured,
           popular: !!p.most_loved,
           isFavorite: false,
-          sku: p.sku || '',
-          description: p.description || ''
+          sku: p.sku || 'N/A',
+          description: p.description || 'Beautiful handcrafted jewelry piece'
         }));
         if (!cancelled) setItems([...jewelryData, ...mapped]);
       } catch (_err) {

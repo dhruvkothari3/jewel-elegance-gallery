@@ -36,8 +36,14 @@ const ProductDetail = () => {
           .from('products')
           .select('*')
           .eq('id', id)
-          .single();
-        if (error || !data) {
+          .eq('is_deleted', false)
+          .maybeSingle();
+        if (error) {
+          console.error('Error fetching product:', error);
+          if (!cancelled) setNotFound(true);
+          return;
+        }
+        if (!data) {
           if (!cancelled) setNotFound(true);
           return;
         }
@@ -45,6 +51,9 @@ const ProductDetail = () => {
           setProduct(data);
           setSelectedImage(0);
         }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        if (!cancelled) setNotFound(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
