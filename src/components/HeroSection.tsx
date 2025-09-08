@@ -73,6 +73,7 @@ const HeroSection = () => {
           <Button 
             size="lg" 
             className="gradient-gold text-primary-foreground border-0 shadow-gold hover:shadow-elegant transition-elegant px-8 py-3 text-lg"
+            onClick={() => window.location.href = '/collections'}
           >
             {slides[currentSlide].cta}
           </Button>
@@ -80,6 +81,7 @@ const HeroSection = () => {
             variant="outline" 
             size="lg"
             className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-elegant px-8 py-3 text-lg"
+            onClick={() => window.location.href = '/stores'}
           >
             Visit Our Store
           </Button>

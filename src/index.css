@@ -19,7 +19,7 @@
     --popover-foreground: 27 43% 13%;
 
     /* Primary - Warm Gold */
-    --primary: 43 75% 39%;             /* Rich gold */
+    --primary: 43 75% 35%;             /* Darker gold for better contrast */
     --primary-foreground: 54 75% 98%;
     --primary-glow: 43 85% 55%;        /* Lighter gold for effects */
 

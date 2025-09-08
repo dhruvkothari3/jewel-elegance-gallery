@@ -6,6 +6,7 @@ import { ProductManagement } from './ProductManagement';
 import { CollectionManagement } from './CollectionManagement';
 import { StoreManagement } from './StoreManagement';
 import { StockManagement } from './StockManagement';
+import { BulkUpload } from './BulkUpload';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 export const AdminDashboard: React.FC = () => {
@@ -78,8 +79,9 @@ export const AdminDashboard: React.FC = () => {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="bulk-upload">Bulk Upload</TabsTrigger>
             <TabsTrigger value="collections">Collections</TabsTrigger>
             <TabsTrigger value="stores">Stores</TabsTrigger>
             <TabsTrigger value="stock">Stock Management</TabsTrigger>
@@ -87,6 +89,10 @@ export const AdminDashboard: React.FC = () => {
           
           <TabsContent value="products" className="space-y-6">
             <ProductManagement />
+          </TabsContent>
+
+          <TabsContent value="bulk-upload" className="space-y-6">
+            <BulkUpload />
           </TabsContent>
           
           <TabsContent value="collections" className="space-y-6">

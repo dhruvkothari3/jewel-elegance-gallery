@@ -25,7 +25,6 @@ const AdminPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       <AdminDashboard />
     </div>
   );
