@@ -1,5 +1,5 @@
 interface WhatsAppProduct {
-  id: number; // 👈 added this
+  id: string | number;
   name: string;
   description?: string;
   priceRange?: string;

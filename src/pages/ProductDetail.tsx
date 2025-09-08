@@ -1,27 +1,66 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Share2, MapPin, Eye, Sparkles, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import Navigation from '@/components/Navigation';
-import { useJewelry } from '@/contexts/JewelryContext';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useToast } from '@/hooks/use-toast';
 import ScheduleViewingDialog from '@/components/ScheduleViewingDialog';
+import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { items } = useJewelry();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { toast } = useToast();
   const [selectedImage, setSelectedImage] = useState(0);
+  const [product, setProduct] = useState<Tables<'products'> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  const product = items.find(item => item.id === parseInt(id || '1'));
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!id) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', id)
+          .single();
+        if (error || !data) {
+          if (!cancelled) setNotFound(true);
+          return;
+        }
+        if (!cancelled) {
+          setProduct(data);
+          setSelectedImage(0);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [id]);
 
-  if (!product) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center text-muted-foreground">Loading product...</div>
+      </div>
+    );
+  }
+
+  if (notFound || !product) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -33,33 +72,18 @@ const ProductDetail = () => {
     );
   }
 
-  // Enhanced product data for display
-  const enhancedProduct = {
-    ...product,
-    images: [product.image, product.image, product.image], // Using same image for demo
-    features: [
-      "Certified materials with excellent quality grade",
-      "Premium setting with protective coating",
-      "Available in multiple sizes",
-      "Comes with lifetime warranty and certification",
-      "Free maintenance for first year"
-    ],
-    specifications: {
-      "Metal Type": product.material,
-      "Item Code": product.sku,
-      "Collection": product.collection,
-      "Occasion": product.occasion,
-      "Price Range": product.priceRange
-    }
-  };
+  const images: string[] = Array.isArray(product.images) ? product.images : [];
+  const primaryImage = images[selectedImage] || images[0] || '';
 
-  const whatsappUrl = getWhatsAppUrl({
-    id: parseInt(id || '0') || 0,
-    name: product.name,
-    description: product.description,
-    priceRange: product.priceRange,
-    images: enhancedProduct.images
-  });
+  const whatsappUrl = useMemo(() => {
+    return getWhatsAppUrl({
+      id: id || '',
+      name: product.name,
+      description: product.description || '',
+      priceRange: '',
+      images: images.length > 0 ? images : [''],
+    });
+  }, [id, product.name, product.description, images]);
 
   const handleWishlistToggle = async () => {
     const productId = id || '0';
@@ -120,15 +144,15 @@ const ProductDetail = () => {
           <div className="space-y-4">
             <div className="aspect-square overflow-hidden rounded-lg bg-muted">
               <img
-                src={enhancedProduct.images[selectedImage]}
-                alt={enhancedProduct.name}
+                src={primaryImage}
+                alt={product.name}
                 className="w-full h-full object-cover jewelry-hover"
               />
             </div>
             
             {/* Thumbnail Images */}
             <div className="flex space-x-4">
-              {enhancedProduct.images.map((image, index) => (
+              {images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
@@ -140,7 +164,7 @@ const ProductDetail = () => {
                 >
                   <img
                     src={image}
-                    alt={`${enhancedProduct.name} view ${index + 1}`}
+                    alt={`${product.name} view ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
                 </button>
@@ -153,14 +177,13 @@ const ProductDetail = () => {
             <div>
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  {enhancedProduct.isNew && (
+                  {product.new_arrival && (
                     <Badge className="bg-primary text-primary-foreground mb-2">
                       New Arrival
                     </Badge>
                   )}
-                  <p className="text-sm text-muted-foreground">{enhancedProduct.collection}</p>
                   <h1 className="text-3xl lg:text-4xl font-serif font-bold text-foreground">
-                    {enhancedProduct.name}
+                    {product.name}
                   </h1>
                 </div>
                 <div className="flex space-x-2">
@@ -187,8 +210,8 @@ const ProductDetail = () => {
                 </div>
               </div>
               
-              <p className="text-2xl font-bold text-primary mb-4">{enhancedProduct.priceRange}</p>
-              <p className="text-muted-foreground leading-relaxed">{enhancedProduct.description}</p>
+              <p className="text-2xl font-bold text-primary mb-4">Price on request</p>
+              <p className="text-muted-foreground leading-relaxed">{product.description}</p>
             </div>
 
             <Separator />
@@ -199,19 +222,19 @@ const ProductDetail = () => {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">SKU:</span>
-                  <p className="font-medium">{enhancedProduct.sku}</p>
+                  <p className="font-medium">{product.sku}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Material:</span>
-                  <p className="font-medium">{enhancedProduct.material}</p>
+                  <p className="font-medium">{String(product.material)}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Type:</span>
-                  <p className="font-medium">{enhancedProduct.type}</p>
+                  <p className="font-medium">{String(product.type)}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Occasion:</span>
-                  <p className="font-medium">{enhancedProduct.occasion}</p>
+                  <p className="font-medium">{product.occasion ? String(product.occasion) : '-'}</p>
                 </div>
               </div>
             </div>
@@ -224,14 +247,7 @@ const ProductDetail = () => {
                 <Sparkles className="h-5 w-5 mr-2 text-primary" />
                 Key Features
               </h3>
-              <ul className="space-y-2">
-                {enhancedProduct.features.map((feature, index) => (
-                  <li key={index} className="flex items-start space-x-3 text-sm">
-                    <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    <span className="text-muted-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+              <p className="text-sm text-muted-foreground">Crafted with premium materials and attention to detail.</p>
             </div>
 
             <Separator />
@@ -240,12 +256,10 @@ const ProductDetail = () => {
             <div>
               <h3 className="text-lg font-serif font-semibold mb-4">Specifications</h3>
               <div className="space-y-3">
-                {Object.entries(enhancedProduct.specifications).map(([key, value]) => (
-                  <div key={key} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{key}:</span>
-                    <span className="font-medium text-right">{value}</span>
-                  </div>
-                ))}
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Stock:</span>
+                  <span className="font-medium text-right">{product.stock}</span>
+                </div>
               </div>
             </div>
 
