@@ -17,11 +17,13 @@ import { useToast } from '@/hooks/use-toast';
 interface ProductData {
   name: string;
   description?: string;
+  priceRange: string;
   sku?: string;
   type: 'ring' | 'necklace' | 'earring' | 'bracelet' | 'bangle';
   material: 'gold' | 'diamond' | 'platinum' | 'rose-gold';
   occasion?: 'bridal' | 'festive' | 'daily-wear' | 'gift';
-  collection_id?: string;
+  collection?: string; // human-readable collection name/handle from CSV
+  collection_id?: string; // resolved UUID
   stock: number;
   featured: boolean;
   most_loved: boolean;
@@ -35,23 +37,25 @@ interface ProductData {
 interface ParsedProduct extends ProductData {
   rowIndex: number;
   errors: string[];
+  warnings: string[];
   images: File[];
   imageUrls: string[];
 }
 
 export const BulkUpload: React.FC = () => {
-  const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [parsedProducts, setParsedProducts] = useState<ParsedProduct[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [showPreview, setShowPreview] = useState(false);
-  const { toast } = useToast();
+const [csvFile, setCsvFile] = useState<File | null>(null);
+const [imageFiles, setImageFiles] = useState<File[]>([]);
+const [parsedProducts, setParsedProducts] = useState<ParsedProduct[]>([]);
+const [uploading, setUploading] = useState(false);
+const [uploadProgress, setUploadProgress] = useState(0);
+const [showPreview, setShowPreview] = useState(false);
+const [createdProducts, setCreatedProducts] = useState<any[]>([]);
+const { toast } = useToast();
 
-  const requiredFields = ['name', 'type', 'material', 'stock', 'slug'];
-  const validTypes = ['ring', 'necklace', 'earring', 'bracelet', 'bangle'];
-  const validMaterials = ['gold', 'diamond', 'platinum', 'rose-gold'];
-  const validOccasions = ['bridal', 'festive', 'daily-wear', 'gift'];
+const requiredFields = ['name', 'description', 'priceRange', 'type', 'material', 'stock', 'slug', 'collection'];
+const validTypes = ['ring', 'necklace', 'earring', 'bracelet', 'bangle'];
+const validMaterials = ['gold', 'diamond', 'platinum', 'rose-gold'];
+const validOccasions = ['bridal', 'festive', 'daily-wear', 'gift'];
 
   const generateSlug = (name: string): string => {
     return name
@@ -109,119 +113,178 @@ export const BulkUpload: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const validateProduct = (product: any, rowIndex: number): ParsedProduct => {
-    const errors: string[] = [];
-    
-    // Check required fields
-    requiredFields.forEach(field => {
-      if (!product[field] || product[field].toString().trim() === '') {
-        errors.push(`${field} is required`);
-      }
-    });
-
-    // Validate enums
-    if (product.type && !validTypes.includes(product.type)) {
-      errors.push(`Invalid type. Must be one of: ${validTypes.join(', ')}`);
+const validateProduct = (product: any, rowIndex: number): ParsedProduct => {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  
+  // Check required fields
+  requiredFields.forEach(field => {
+    if (!product[field] || product[field].toString().trim() === '') {
+      errors.push(`${field} is required`);
     }
-    
-    if (product.material && !validMaterials.includes(product.material)) {
-      errors.push(`Invalid material. Must be one of: ${validMaterials.join(', ')}`);
-    }
-    
-    if (product.occasion && product.occasion !== '' && !validOccasions.includes(product.occasion)) {
-      errors.push(`Invalid occasion. Must be one of: ${validOccasions.join(', ')}`);
-    }
+  });
 
-    // Validate stock is a number
-    if (product.stock && isNaN(Number(product.stock))) {
-      errors.push('Stock must be a valid number');
-    }
+  // Validate enums
+  if (product.type && !validTypes.includes(product.type)) {
+    errors.push(`Invalid type. Must be one of: ${validTypes.join(', ')}`);
+  }
+  
+  if (product.material && !validMaterials.includes(product.material)) {
+    errors.push(`Invalid material. Must be one of: ${validMaterials.join(', ')}`);
+  }
+  
+  if (product.occasion && product.occasion !== '' && !validOccasions.includes(product.occasion)) {
+    errors.push(`Invalid occasion. Must be one of: ${validOccasions.join(', ')}`);
+  }
 
-    // Generate slug if not provided
-    if (!product.slug && product.name) {
-      product.slug = generateSlug(product.name);
-    }
+  // Validate stock is a number
+  if (product.stock && isNaN(Number(product.stock))) {
+    errors.push('Stock must be a valid number');
+  }
 
-    // Parse boolean fields
-    const booleanFields = ['featured', 'most_loved', 'new_arrival'];
-    booleanFields.forEach(field => {
-      if (product[field]) {
-        product[field] = product[field].toString().toLowerCase() === 'true';
-      } else {
-        product[field] = false;
-      }
-    });
+  // Generate slug if not provided
+  if (!product.slug && product.name) {
+    product.slug = generateSlug(product.name);
+  }
 
-    // Parse sizes array
-    if (product.sizes && typeof product.sizes === 'string') {
-      product.sizes = product.sizes.split(',').map(s => s.trim()).filter(s => s);
+  // Parse boolean fields
+  const booleanFields = ['featured', 'most_loved', 'new_arrival'];
+  booleanFields.forEach(field => {
+    if (product[field] !== undefined && product[field] !== null) {
+      product[field] = product[field].toString().toLowerCase() === 'true';
     } else {
-      product.sizes = [];
+      product[field] = false;
     }
+  });
 
-    // Parse stock to number
-    if (product.stock) {
-      product.stock = Number(product.stock);
-    }
+  // Parse sizes array
+  if (product.sizes && typeof product.sizes === 'string') {
+    product.sizes = product.sizes.split(',').map((s: string) => s.trim()).filter((s: string) => s);
+  } else if (!product.sizes) {
+    product.sizes = [];
+  }
 
-    return {
-      ...product,
-      rowIndex,
-      errors,
-      images: [],
-      imageUrls: []
-    };
+  // Parse stock to number
+  if (product.stock) {
+    product.stock = Number(product.stock);
+  }
+
+  return {
+    ...product,
+    rowIndex,
+    errors,
+    warnings,
+    images: [],
+    imageUrls: []
   };
+};
 
-  const handleCSVUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+const handleCSVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
 
-    setCsvFile(file);
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      
-      try {
-        let data: any[] = [];
-        
-        if (file.name.endsWith('.csv')) {
-          const result = Papa.parse(content, {
-            header: true,
-            skipEmptyLines: true,
-            transform: (value) => value.trim()
-          });
-          data = result.data;
-        } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-          const workbook = XLSX.read(content, { type: 'string' });
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          data = XLSX.utils.sheet_to_json(worksheet);
-        }
-        
-        const validatedProducts = data.map((product, index) => 
-          validateProduct(product, index + 1)
-        );
-        
-        setParsedProducts(validatedProducts);
-        setShowPreview(true);
-        
-        toast({
-          title: "File parsed successfully",
-          description: `Found ${validatedProducts.length} products to process`
-        });
-      } catch (error) {
-        toast({
-          title: "Error parsing file",
-          description: "Please check your file format and try again",
-          variant: "destructive"
-        });
+  setCsvFile(file);
+  setCreatedProducts([]);
+  
+  try {
+    let data: any[] = [];
+
+    if (file.name.endsWith('.csv')) {
+      const text = await file.text();
+      const result = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transform: (value) => value.trim()
+      });
+      data = result.data as any[];
+    } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      data = XLSX.utils.sheet_to_json(worksheet) as any[];
+    } else {
+      toast({
+        title: 'Unsupported file type',
+        description: 'Please upload a .csv or .xlsx file',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // First-pass validation
+    let validatedProducts = data.map((product, index) => 
+      validateProduct(product, index + 1)
+    );
+
+    // Duplicate slug check within file
+    const slugCounts: Record<string, number> = {};
+    validatedProducts.forEach(p => {
+      if (p.slug) slugCounts[p.slug] = (slugCounts[p.slug] || 0) + 1;
+    });
+    validatedProducts = validatedProducts.map(p => {
+      if (p.slug && slugCounts[p.slug] > 1) {
+        p.errors.push('Duplicate slug in file');
       }
-    };
-    
-    reader.readAsText(file);
-  };
+      return p;
+    });
+
+    // Duplicate slug check against DB
+    const slugs = validatedProducts.map(p => p.slug).filter(Boolean);
+    if (slugs.length > 0) {
+      const { data: existing } = await supabase
+        .from('products')
+        .select('slug')
+        .in('slug', slugs);
+      const existingSet = new Set((existing || []).map((e: any) => e.slug));
+      validatedProducts = validatedProducts.map(p => {
+        if (existingSet.has(p.slug)) {
+          p.errors.push('Slug already exists in database');
+        }
+        return p;
+      });
+    }
+
+    // Map collections by name/handle
+    const { data: collections } = await supabase
+      .from('collections')
+      .select('id, name, handle');
+    const colMap = new Map<string, string>();
+    (collections || []).forEach((c: any) => {
+      if (c.name) colMap.set(c.name.toLowerCase(), c.id);
+      if (c.handle) colMap.set(c.handle.toLowerCase(), c.id);
+    });
+    validatedProducts = validatedProducts.map(p => {
+      const key = (p.collection || '').toLowerCase();
+      if (key) {
+        const id = colMap.get(key);
+        if (id) {
+          p.collection_id = id;
+        } else {
+          p.warnings.push(`Collection '${p.collection}' not found. Will assign no collection.`);
+          p.collection_id = null as any;
+        }
+      } else {
+        p.warnings.push('No collection specified.');
+        p.collection_id = null as any;
+      }
+      return p;
+    });
+
+    setParsedProducts(validatedProducts);
+    setShowPreview(true);
+    toast({
+      title: 'File parsed successfully',
+      description: `Found ${validatedProducts.length} products to process`
+    });
+  } catch (error) {
+    toast({
+      title: 'Error parsing file',
+      description: 'Please check your file format and try again',
+      variant: 'destructive'
+    });
+  }
+};
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -274,81 +337,96 @@ export const BulkUpload: React.FC = () => {
     return Promise.all(uploadPromises);
   };
 
-  const handleBulkUpload = async () => {
-    const validProducts = parsedProducts.filter(p => p.errors.length === 0);
-    
-    if (validProducts.length === 0) {
-      toast({
-        title: "No valid products to upload",
-        description: "Please fix the errors in your data",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setUploading(true);
-    setUploadProgress(0);
-    
-    try {
-      const totalSteps = validProducts.length * 2; // Upload images + create product
-      let completedSteps = 0;
-      
-      for (const product of validProducts) {
-        // Upload images first
-        let productImageUrls: string[] = [];
-        if (product.images.length > 0) {
-          try {
-            productImageUrls = await uploadImages(product.images);
-          } catch (error) {
-            console.error(`Failed to upload images for ${product.name}:`, error);
-          }
+const handleBulkUpload = async () => {
+  const validProducts = parsedProducts.filter(p => p.errors.length === 0);
+  
+  if (validProducts.length === 0) {
+    toast({
+      title: "No valid products to upload",
+      description: "Please fix the errors in your data",
+      variant: "destructive"
+    });
+    return;
+  }
+  
+  setUploading(true);
+  setUploadProgress(0);
+  setCreatedProducts([]);
+  
+  try {
+    const totalSteps = validProducts.length * 2; // Upload images + include in batch
+    let completedSteps = 0;
+
+    const payloads: any[] = [];
+
+    for (const product of validProducts) {
+      // Upload images first (optional)
+      let productImageUrls: string[] = [];
+      if (product.images.length > 0) {
+        try {
+          productImageUrls = await uploadImages(product.images);
+        } catch (error) {
+          console.error(`Failed to upload images for ${product.name}:`, error);
+          product.warnings.push('Some images failed to upload.');
         }
-        
-        completedSteps++;
-        setUploadProgress((completedSteps / totalSteps) * 100);
-        
-        // Create product
-        const { sizes, rowIndex, errors, images, imageUrls, ...productData } = product;
-        const payload = {
-          ...productData,
-          images: productImageUrls,
-          sizes: sizes || []
-        };
-        
-        const { error } = await supabase
-          .from('products')
-          .insert(payload);
-        
-        if (error) {
-          throw error;
-        }
-        
-        completedSteps++;
-        setUploadProgress((completedSteps / totalSteps) * 100);
+      } else {
+        product.warnings.push('No images matched.');
       }
-      
-      toast({
-        title: "Upload completed",
-        description: `Successfully uploaded ${validProducts.length} products`
+
+      completedSteps++;
+      setUploadProgress((completedSteps / totalSteps) * 100);
+
+      const { sizes, rowIndex, errors, images, imageUrls, warnings, collection, priceRange, ...productData } = product;
+      payloads.push({
+        ...productData,
+        images: productImageUrls,
+        sizes: sizes || [],
+        occasion: product.occasion || null,
+        sku: product.sku || null,
+        meta_title: product.meta_title || null,
+        meta_description: product.meta_description || null,
+        collection_id: product.collection_id || null,
+        price_range: priceRange,
       });
-      
-      // Reset form
-      setCsvFile(null);
-      setImageFiles([]);
-      setParsedProducts([]);
-      setShowPreview(false);
-      
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "An error occurred during upload",
-        variant: "destructive"
-      });
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
+
+      completedSteps++;
+      setUploadProgress((completedSteps / totalSteps) * 100);
     }
-  };
+
+    // Batch insert
+    const { data, error } = await supabase
+      .from('products')
+      .insert(payloads)
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    setCreatedProducts(data || []);
+
+    toast({
+      title: "Upload completed",
+      description: `Successfully uploaded ${data?.length ?? validProducts.length} products`
+    });
+
+    // Notify other admin views to refresh
+    window.dispatchEvent(new CustomEvent('products:refresh'));
+
+    // Reset form inputs but keep preview and results visible
+    setCsvFile(null);
+    setImageFiles([]);
+  } catch (error) {
+    toast({
+      title: "Upload failed",
+      description: error instanceof Error ? error.message : "An error occurred during upload",
+      variant: "destructive"
+    });
+  } finally {
+    setUploading(false);
+    setUploadProgress(0);
+  }
+};
 
   return (
     <Card>
@@ -366,11 +444,11 @@ export const BulkUpload: React.FC = () => {
             <div className="space-y-2">
               <p><strong>Instructions:</strong></p>
               <ul className="list-disc list-inside space-y-1 text-sm">
-                <li>Upload a CSV or Excel file with product details</li>
-                <li>Required fields: name, type, material, stock, slug</li>
-                <li>Optional: Upload product images (JPG, PNG, WebP)</li>
-                <li>Images will be auto-assigned based on filename matching</li>
-                <li>Preview your data before confirming the upload</li>
+<li>Upload a CSV (.csv) or Excel (.xlsx) file with product details</li>
+<li>Required fields: name, description, priceRange, type, material, stock, slug, collection</li>
+<li>Optional fields: occasion, sku, sizes, meta_title, meta_description</li>
+<li>Optional: Upload product images (JPG, PNG, WebP). Images auto-match by filename (slug, SKU, or name). Support patterns like slug-1.jpg, slug-2.png</li>
+<li>Rows with errors are skipped; all issues are listed below</li>
               </ul>
               <Button
                 variant="outline"
@@ -457,74 +535,108 @@ export const BulkUpload: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Row</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Material</TableHead>
-                      <TableHead>Stock</TableHead>
-                      <TableHead>Images</TableHead>
-                      <TableHead>Status</TableHead>
+<TableHead>Row</TableHead>
+<TableHead>Name</TableHead>
+<TableHead>Type</TableHead>
+<TableHead>Material</TableHead>
+<TableHead>Stock</TableHead>
+<TableHead>Images</TableHead>
+<TableHead>Warnings</TableHead>
+<TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {parsedProducts.map((product, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{product.rowIndex}</TableCell>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>{product.type}</TableCell>
-                        <TableCell>{product.material}</TableCell>
-                        <TableCell>{product.stock}</TableCell>
-                        <TableCell>{product.images.length} images</TableCell>
-                        <TableCell>
-                          {product.errors.length === 0 ? (
-                            <Badge variant="outline" className="text-green-600">
-                              <CheckCircle2 className="h-3 w-3 mr-1" />
-                              Valid
-                            </Badge>
-                          ) : (
-                            <Badge variant="destructive">
-                              <X className="h-3 w-3 mr-1" />
-                              {product.errors.length} errors
-                            </Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+{parsedProducts.map((product, index) => (
+  <TableRow key={index}>
+    <TableCell>{product.rowIndex}</TableCell>
+    <TableCell className="font-medium">{product.name}</TableCell>
+    <TableCell>{product.type}</TableCell>
+    <TableCell>{product.material}</TableCell>
+    <TableCell>{product.stock}</TableCell>
+    <TableCell>{product.images.length} images</TableCell>
+    <TableCell>{product.warnings?.length || 0}</TableCell>
+    <TableCell>
+      {product.errors.length === 0 ? (
+        <Badge variant="outline" className="text-green-600">
+          <CheckCircle2 className="h-3 w-3 mr-1" />
+          Valid
+        </Badge>
+      ) : (
+        <Badge variant="destructive">
+          <X className="h-3 w-3 mr-1" />
+          {product.errors.length} errors
+        </Badge>
+      )}
+    </TableCell>
+  </TableRow>
+))}
                   </TableBody>
                 </Table>
               </div>
 
-              {/* Error Details */}
-              {parsedProducts.some(p => p.errors.length > 0) && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <div className="space-y-2">
-                      <p><strong>Fix these errors before uploading:</strong></p>
-                      {parsedProducts.filter(p => p.errors.length > 0).map(product => (
-                        <div key={product.rowIndex} className="text-sm">
-                          <strong>Row {product.rowIndex} ({product.name}):</strong>
-                          <ul className="list-disc list-inside ml-4">
-                            {product.errors.map((error, i) => (
-                              <li key={i}>{error}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  </AlertDescription>
-                </Alert>
-              )}
+{/* Error & Warning Details */}
+{parsedProducts.some(p => p.errors.length > 0) && (
+  <Alert variant="destructive">
+    <AlertCircle className="h-4 w-4" />
+    <AlertDescription>
+      <div className="space-y-2">
+        <p><strong>Fix these errors before uploading:</strong></p>
+        {parsedProducts.filter(p => p.errors.length > 0).map(product => (
+          <div key={product.rowIndex} className="text-sm">
+            <strong>Row {product.rowIndex} ({product.name}):</strong>
+            <ul className="list-disc list-inside ml-4">
+              {product.errors.map((error, i) => (
+                <li key={i}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </AlertDescription>
+  </Alert>
+)}
+{parsedProducts.some(p => (p.warnings?.length || 0) > 0) && (
+  <Alert>
+    <AlertCircle className="h-4 w-4" />
+    <AlertDescription>
+      <div className="space-y-2">
+        <p><strong>Warnings (will still upload):</strong></p>
+        {parsedProducts.filter(p => (p.warnings?.length || 0) > 0).map(product => (
+          <div key={product.rowIndex} className="text-sm">
+            <strong>Row {product.rowIndex} ({product.name}):</strong>
+            <ul className="list-disc list-inside ml-4">
+              {product.warnings.map((warning, i) => (
+                <li key={i}>{warning}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </AlertDescription>
+  </Alert>
+)}
 
-              {/* Upload Progress */}
-              {uploading && (
-                <div className="space-y-2">
-                  <Progress value={uploadProgress} />
-                  <p className="text-sm text-muted-foreground text-center">
-                    Uploading... {Math.round(uploadProgress)}%
-                  </p>
-                </div>
-              )}
+{/* Upload Progress */}
+{uploading && (
+  <div className="space-y-2">
+    <Progress value={uploadProgress} />
+    <p className="text-sm text-muted-foreground text-center">
+      Uploading... {Math.round(uploadProgress)}%
+    </p>
+  </div>
+)}
+
+{/* Created/Updated Results */}
+{!uploading && createdProducts.length > 0 && (
+  <div className="space-y-2">
+    <h4 className="text-sm font-medium">Created products:</h4>
+    <ul className="list-disc list-inside text-sm">
+      {createdProducts.map((p) => (
+        <li key={p.id}>{p.name} — {p.slug}</li>
+      ))}
+    </ul>
+  </div>
+)}
 
               {/* Action Buttons */}
               <div className="flex justify-end gap-2">

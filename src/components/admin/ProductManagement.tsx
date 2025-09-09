@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProducts } from '@/hooks/useProducts';
 import { useCollections } from '@/hooks/useCollections';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,18 @@ import { ProductForm } from './ProductForm';
 import { Plus, Search, Edit, Trash2, Package } from 'lucide-react';
 
 export const ProductManagement: React.FC = () => {
-  const { products, loading, createProduct, updateProduct, deleteProduct } = useProducts();
+  const { products, loading, createProduct, updateProduct, deleteProduct, fetchProducts } = useProducts();
   const { collections } = useCollections();
   const [searchTerm, setSearchTerm] = useState('');
   const [editingProduct, setEditingProduct] = useState(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => fetchProducts();
+    window.addEventListener('products:refresh', handler);
+    return () => window.removeEventListener('products:refresh', handler);
+  }, [fetchProducts]);
 
   const filteredProducts = products.filter(product => 
     !product.is_deleted &&
