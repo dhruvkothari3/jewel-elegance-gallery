@@ -70,6 +70,8 @@ const validOccasions = ['bridal', 'festive', 'daily-wear', 'gift'];
           {
             name: 'Diamond Engagement Ring',
             description: 'Beautiful solitaire diamond ring',
+            priceRange: '₹50,000 - ₹75,000',
+            collection: 'bridal',
             sku: 'DR-001',
             type: 'ring',
             material: 'diamond',
@@ -86,6 +88,8 @@ const validOccasions = ['bridal', 'festive', 'daily-wear', 'gift'];
           {
             name: 'Gold Necklace Set',
             description: 'Traditional gold necklace with matching earrings',
+            priceRange: '₹30,000 - ₹45,000',
+            collection: 'festive',
             sku: 'GN-002',
             type: 'necklace',
             material: 'gold',
@@ -317,21 +321,19 @@ const handleCSVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
   };
 
   const uploadImages = async (images: File[]): Promise<string[]> => {
+    const { uploadImageAndGetUrl } = await import('@/lib/upload');
+    
     const uploadPromises = images.map(async (image) => {
-      const formData = new FormData();
-      formData.append('file', image);
-      
-      const response = await fetch('/api/upload/product', {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to upload ${image.name}`);
+      try {
+        const url = await uploadImageAndGetUrl(image, 'product-images');
+        if (!url) {
+          throw new Error(`Failed to upload ${image.name}`);
+        }
+        return url;
+      } catch (error) {
+        console.error(`Error uploading ${image.name}:`, error);
+        throw error;
       }
-      
-      const data = await response.json();
-      return data.url;
     });
     
     return Promise.all(uploadPromises);

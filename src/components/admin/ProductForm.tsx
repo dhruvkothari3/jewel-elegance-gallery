@@ -28,6 +28,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     description: initialData?.description || '',
+    price_range: initialData?.price_range || '',
     sku: initialData?.sku || '',
     slug: initialData?.slug || '',
     type: initialData?.type || '',
@@ -136,6 +137,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 rows={3}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="price_range">Price Range</Label>
+              <Input
+                id="price_range"
+                value={formData.price_range}
+                onChange={(e) => handleInputChange('price_range', e.target.value)}
+                placeholder="e.g., ₹50,000 - ₹75,000"
               />
             </div>
 

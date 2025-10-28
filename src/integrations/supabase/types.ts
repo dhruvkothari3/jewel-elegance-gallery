@@ -61,6 +61,7 @@ export type Database = {
           name: string
           new_arrival: boolean
           occasion: Database["public"]["Enums"]["product_occasion"] | null
+          price_range: string | null
           sizes: string[] | null
           sku: string | null
           slug: string
@@ -85,6 +86,7 @@ export type Database = {
           name: string
           new_arrival?: boolean
           occasion?: Database["public"]["Enums"]["product_occasion"] | null
+          price_range?: string | null
           sizes?: string[] | null
           sku?: string | null
           slug: string
@@ -109,6 +111,7 @@ export type Database = {
           name?: string
           new_arrival?: boolean
           occasion?: Database["public"]["Enums"]["product_occasion"] | null
+          price_range?: string | null
           sizes?: string[] | null
           sku?: string | null
           slug?: string
@@ -278,26 +281,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      gtrgm_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_decompress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
-      gtrgm_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -305,18 +288,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      set_limit: {
-        Args: { "": number }
-        Returns: number
-      }
-      show_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      show_trgm: {
-        Args: { "": string }
-        Returns: string[]
-      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       app_role: "admin" | "customer"
