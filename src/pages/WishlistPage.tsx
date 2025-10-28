@@ -116,7 +116,7 @@ const WishlistPage = () => {
               type: item.products.type,
               material: item.products.material,
               occasion: 'Special',
-              image: item.products.images?.[0] || '/src/assets/product-ring.jpg',
+              image: (item.products as any).image || item.products.images?.[0] || '/src/assets/product-ring.jpg',
               priceRange: '₹25,000 - ₹75,000',
               sku: '',
               description: '',

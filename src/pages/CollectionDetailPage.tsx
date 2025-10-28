@@ -236,7 +236,7 @@ const CollectionDetailPage = () => {
                 type={product.type}
                 material={product.material}
                 occasion={product.occasion || 'Special'}
-                image={product.images?.[0] || '/src/assets/product-ring.jpg'}
+                image={(product as any).image || product.images?.[0] || '/src/assets/product-ring.jpg'}
                 priceRange="₹25,000 - ₹75,000"
                 sku={product.sku}
                 description={product.description || ''}

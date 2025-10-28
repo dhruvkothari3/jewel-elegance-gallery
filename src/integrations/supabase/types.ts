@@ -46,6 +46,7 @@ export type Database = {
       }
       products: {
         Row: {
+          image: string | null
           collection_id: string | null
           created_at: string
           created_by: string | null
@@ -71,6 +72,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          image?: string | null
           collection_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -96,6 +98,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          image?: string | null
           collection_id?: string | null
           created_at?: string
           created_by?: string | null

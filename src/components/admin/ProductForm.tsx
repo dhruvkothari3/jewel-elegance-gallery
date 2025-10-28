@@ -40,6 +40,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     new_arrival: initialData?.new_arrival || false,
     most_loved: initialData?.most_loved || false,
     images: initialData?.images || [],
+    image: initialData?.image || '',
     sizes: initialData?.sizes || [],
     meta_title: initialData?.meta_title || '',
     meta_description: initialData?.meta_description || ''
@@ -61,6 +62,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setFormData(prev => ({
         ...prev,
         images: [...prev.images, url]
+      }));
+      // Set primary image if not set
+      setFormData(prev => ({
+        ...prev,
+        image: prev.image || url
       }));
     }
   };
@@ -104,10 +110,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         const next = { ...formData } as any;
         if (!Array.isArray(next.images)) next.images = [];
         if (uploaded.length > 0) next.images = [...uploaded, ...next.images];
+        // Ensure primary image mirrors first images entry
+        if (!next.image) {
+          next.image = next.images[0] || '';
+        }
         onSubmit(next);
       } catch (_err) {
         // Fallback to submitting current formData without new uploads
-        onSubmit(formData);
+        const fallback = { ...formData } as any;
+        if (!fallback.image) fallback.image = Array.isArray(fallback.images) ? (fallback.images[0] || '') : '';
+        onSubmit(fallback);
       }
     })();
   };

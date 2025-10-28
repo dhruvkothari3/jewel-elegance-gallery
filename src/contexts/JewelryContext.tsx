@@ -351,7 +351,7 @@ export const JewelryProvider: React.FC<{ children: React.ReactNode }> = ({ child
           id: p.id, // Use actual UUID from Supabase
           name: p.name || 'Product',
           collection: p.collections?.name || p.collections?.handle || 'General',
-          image: (Array.isArray(p.images) && p.images.length > 0 && p.images[0]) || '/placeholder.svg',
+          image: (p as any).image || ((Array.isArray(p.images) && p.images.length > 0 && p.images[0]) || '/placeholder.svg'),
           material: p.material ? String(p.material).replace('_', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Gold',
           type: p.type ? String(p.type).replace('_', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Rings',
           occasion: p.occasion ? String(p.occasion).replace('_', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Daily Wear',

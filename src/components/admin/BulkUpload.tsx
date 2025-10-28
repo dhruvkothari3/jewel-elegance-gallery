@@ -385,6 +385,21 @@ const handleCSVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
   };
 
 const handleBulkUpload = async () => {
+  // Ensure user is authenticated before performing uploads/inserts
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      toast({
+        title: 'Not authenticated',
+        description: 'Please sign in as an admin to perform bulk upload.',
+        variant: 'destructive'
+      });
+      return;
+    }
+  } catch (_e) {
+    // Ignore; supabase client may already be imported above
+  }
   const validProducts = parsedProducts.filter(p => p.errors.length === 0);
   const failedProducts = parsedProducts.filter(p => p.errors.length > 0);
   
@@ -433,6 +448,7 @@ const handleBulkUpload = async () => {
       payloads.push({
         ...productData,
         images: productImageUrls,
+        image: productImageUrls[0] || null,
         sizes: sizes || [],
         occasion: product.occasion || null,
         sku: product.sku || null,
@@ -446,14 +462,43 @@ const handleBulkUpload = async () => {
       setUploadProgress((completedSteps / totalSteps) * 100);
     }
 
-    // Batch insert
-    const { data, error } = await supabase
-      .from('products')
-      .insert(payloads)
-      .select();
+    // Batch insert with fallback if 'image' column missing
+    let insertError: any = null;
+    let data: any = null;
+    {
+      const res = await supabase
+        .from('products')
+        .insert(payloads)
+        .select();
+      data = res.data;
+      insertError = res.error;
+    }
 
-    if (error) {
-      throw error;
+    if (
+      insertError && (
+        insertError.code === 'PGRST204' ||
+        (typeof insertError.message === 'string' && (
+          insertError.message.includes("'image' column") ||
+          insertError.message.toLowerCase().includes('schema cache') ||
+          insertError.message.toLowerCase().includes('image')
+        ))
+      )
+    ) {
+      // Retry without 'image' key for each payload
+      const fallbackPayloads = payloads.map(p => {
+        const { image, ...rest } = p;
+        return rest;
+      });
+      const res2 = await supabase
+        .from('products')
+        .insert(fallbackPayloads)
+        .select();
+      data = res2.data;
+      insertError = res2.error;
+    }
+
+    if (insertError) {
+      throw insertError;
     }
 
     setCreatedProducts(data || []);

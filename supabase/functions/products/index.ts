@@ -10,6 +10,7 @@ interface Database {
           slug: string
           name: string
           description: string | null
+          image: string | null
           images: string[]
           type: 'ring' | 'necklace' | 'earring' | 'bracelet' | 'bangle'
           material: 'gold' | 'diamond' | 'platinum' | 'rose-gold'
@@ -33,6 +34,7 @@ interface Database {
           slug: string
           name: string
           description?: string | null
+          image?: string | null
           images?: string[]
           type: 'ring' | 'necklace' | 'earring' | 'bracelet' | 'bangle'
           material: 'gold' | 'diamond' | 'platinum' | 'rose-gold'
@@ -51,6 +53,7 @@ interface Database {
           slug?: string
           name?: string
           description?: string | null
+          image?: string | null
           images?: string[]
           type?: 'ring' | 'necklace' | 'earring' | 'bracelet' | 'bangle'
           material?: 'gold' | 'diamond' | 'platinum' | 'rose-gold'
@@ -240,14 +243,40 @@ async function handlePost(req: Request) {
   // Set created_by
   body.created_by = user.id
 
-  const { data: product, error } = await supabase
-    .from('products')
-    .insert(body)
-    .select()
-    .single()
+  // Insert with retry excluding 'image' if PostgREST schema cache is stale
+  let insertError: any = null
+  let product: any = null
+  {
+    const res = await supabase
+      .from('products')
+      .insert(body)
+      .select()
+      .single()
+    insertError = res.error
+    product = res.data
+  }
+  if (
+    insertError && (
+      (insertError.code && String(insertError.code) === 'PGRST204') ||
+      (typeof insertError.message === 'string' && (
+        insertError.message.includes("'image' column") ||
+        insertError.message.toLowerCase().includes('schema cache') ||
+        insertError.message.toLowerCase().includes('image')
+      ))
+    )
+  ) {
+    const { image, ...rest } = body
+    const res2 = await supabase
+      .from('products')
+      .insert(rest)
+      .select()
+      .single()
+    insertError = res2.error
+    product = res2.data
+  }
 
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  if (insertError) {
+    return new Response(JSON.stringify({ error: insertError.message }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
@@ -295,15 +324,42 @@ async function handlePut(req: Request) {
   // Set updated_by
   body.updated_by = user.id
 
-  const { data: product, error } = await supabase
-    .from('products')
-    .update(body)
-    .eq('slug', slug)
-    .select()
-    .single()
+  // Update with retry excluding 'image' if schema cache is stale
+  let updateError: any = null
+  let product: any = null
+  {
+    const res = await supabase
+      .from('products')
+      .update(body)
+      .eq('slug', slug)
+      .select()
+      .single()
+    updateError = res.error
+    product = res.data
+  }
+  if (
+    updateError && (
+      (updateError.code && String(updateError.code) === 'PGRST204') ||
+      (typeof updateError.message === 'string' && (
+        updateError.message.includes("'image' column") ||
+        updateError.message.toLowerCase().includes('schema cache') ||
+        updateError.message.toLowerCase().includes('image')
+      ))
+    )
+  ) {
+    const { image, ...rest } = body
+    const res2 = await supabase
+      .from('products')
+      .update(rest)
+      .eq('slug', slug)
+      .select()
+      .single()
+    updateError = res2.error
+    product = res2.data
+  }
 
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  if (updateError) {
+    return new Response(JSON.stringify({ error: updateError.message }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })

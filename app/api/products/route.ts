@@ -15,7 +15,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const images: string[] = Array.isArray(body.images) ? body.images : [];
-    const payload = { ...body, images };
+    const image: string | null = body.image ?? (images[0] ?? null);
+    const payload = { ...body, images, image };
     const { data, error } = await supabase.from('products').insert(payload).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json(data, { status: 201 });
