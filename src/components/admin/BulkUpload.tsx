@@ -32,6 +32,7 @@ interface ProductData {
   meta_title?: string;
   meta_description?: string;
   slug: string;
+  image_filenames?: string; // pipe-separated list of image filenames
 }
 
 interface ParsedProduct extends ProductData {
@@ -40,6 +41,14 @@ interface ParsedProduct extends ProductData {
   warnings: string[];
   images: File[];
   imageUrls: string[];
+  imageMatched: boolean;
+  requestedFilenames: string[];
+}
+
+interface UploadSummary {
+  successWithImages: ParsedProduct[];
+  successNoImages: ParsedProduct[];
+  failed: ParsedProduct[];
 }
 
 export const BulkUpload: React.FC = () => {
@@ -50,6 +59,7 @@ const [uploading, setUploading] = useState(false);
 const [uploadProgress, setUploadProgress] = useState(0);
 const [showPreview, setShowPreview] = useState(false);
 const [createdProducts, setCreatedProducts] = useState<any[]>([]);
+const [uploadSummary, setUploadSummary] = useState<UploadSummary | null>(null);
 const { toast } = useToast();
 
 const requiredFields = ['name', 'description', 'priceRange', 'type', 'material', 'stock', 'slug', 'collection'];
@@ -83,7 +93,8 @@ const validOccasions = ['bridal', 'festive', 'daily-wear', 'gift'];
             sizes: 'S,M,L',
             meta_title: 'Diamond Engagement Ring - Premium Collection',
             meta_description: 'Stunning solitaire diamond engagement ring crafted with precision',
-            slug: 'diamond-engagement-ring'
+            slug: 'diamond-engagement-ring',
+            image_filenames: 'diamond-engagement-ring-1.jpg|diamond-engagement-ring-2.jpg'
           },
           {
             name: 'Gold Necklace Set',
@@ -101,7 +112,8 @@ const validOccasions = ['bridal', 'festive', 'daily-wear', 'gift'];
             sizes: '',
             meta_title: 'Traditional Gold Necklace Set',
             meta_description: 'Elegant traditional gold necklace perfect for festivities',
-            slug: 'gold-necklace-set'
+            slug: 'gold-necklace-set',
+            image_filenames: 'gold-necklace-set.png'
           }
         ];
 
@@ -173,13 +185,26 @@ const validateProduct = (product: any, rowIndex: number): ParsedProduct => {
     product.stock = Number(product.stock);
   }
 
+  // Parse image_filenames
+  const requestedFilenames: string[] = [];
+  if (product.image_filenames && typeof product.image_filenames === 'string') {
+    requestedFilenames.push(
+      ...product.image_filenames
+        .split('|')
+        .map((f: string) => f.trim().toLowerCase())
+        .filter((f: string) => f && /\.(jpg|jpeg|png|webp)$/i.test(f))
+    );
+  }
+
   return {
     ...product,
     rowIndex,
     errors,
     warnings,
     images: [],
-    imageUrls: []
+    imageUrls: [],
+    imageMatched: false,
+    requestedFilenames
   };
 };
 
@@ -294,29 +319,49 @@ const handleCSVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setImageFiles(files);
     
-    // Auto-assign images to products based on filename matching
+    // Auto-assign images to products based on filename matching (smart matching)
     const updatedProducts = parsedProducts.map(product => {
-      const matchingImages = files.filter(file => {
-        const fileName = file.name.toLowerCase();
-        const productSlug = product.slug.toLowerCase();
-        const productSku = product.sku?.toLowerCase() || '';
-        
-        return fileName.includes(productSlug) || 
-               (productSku && fileName.includes(productSku)) ||
-               fileName.includes(product.name.toLowerCase().replace(/\s+/g, '-'));
-      });
+      const matchingImages: File[] = [];
+      
+      // If product has requested filenames from CSV, match those specifically
+      if (product.requestedFilenames.length > 0) {
+        product.requestedFilenames.forEach(requestedName => {
+          const matchedFile = files.find(file => 
+            file.name.toLowerCase().trim() === requestedName
+          );
+          if (matchedFile) {
+            matchingImages.push(matchedFile);
+          }
+        });
+      } else {
+        // Fallback: match by slug, SKU, or name
+        const matched = files.filter(file => {
+          const fileName = file.name.toLowerCase().trim();
+          const productSlug = product.slug.toLowerCase();
+          const productSku = product.sku?.toLowerCase() || '';
+          
+          return fileName.includes(productSlug) || 
+                 (productSku && fileName.includes(productSku)) ||
+                 fileName.includes(product.name.toLowerCase().replace(/\s+/g, '-'));
+        });
+        matchingImages.push(...matched);
+      }
+      
+      const imageMatched = matchingImages.length > 0;
       
       return {
         ...product,
-        images: matchingImages.slice(0, 5) // Limit to 5 images per product
+        images: matchingImages.slice(0, 5), // Limit to 5 images per product
+        imageMatched
       };
     });
     
     setParsedProducts(updatedProducts);
     
+    const totalMatched = updatedProducts.filter(p => p.imageMatched).length;
     toast({
       title: "Images uploaded",
-      description: `${files.length} images uploaded and auto-assigned to products`
+      description: `${files.length} images uploaded. ${totalMatched} products matched with images.`
     });
   };
 
@@ -341,6 +386,7 @@ const handleCSVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
 const handleBulkUpload = async () => {
   const validProducts = parsedProducts.filter(p => p.errors.length === 0);
+  const failedProducts = parsedProducts.filter(p => p.errors.length > 0);
   
   if (validProducts.length === 0) {
     toast({
@@ -354,12 +400,15 @@ const handleBulkUpload = async () => {
   setUploading(true);
   setUploadProgress(0);
   setCreatedProducts([]);
+  setUploadSummary(null);
   
   try {
     const totalSteps = validProducts.length * 2; // Upload images + include in batch
     let completedSteps = 0;
 
     const payloads: any[] = [];
+    const productsWithImages: ParsedProduct[] = [];
+    const productsWithoutImages: ParsedProduct[] = [];
 
     for (const product of validProducts) {
       // Upload images first (optional)
@@ -367,18 +416,20 @@ const handleBulkUpload = async () => {
       if (product.images.length > 0) {
         try {
           productImageUrls = await uploadImages(product.images);
+          productsWithImages.push(product);
         } catch (error) {
           console.error(`Failed to upload images for ${product.name}:`, error);
-          product.warnings.push('Some images failed to upload.');
+          // Continue without images
+          productsWithoutImages.push(product);
         }
       } else {
-        product.warnings.push('No images matched.');
+        productsWithoutImages.push(product);
       }
 
       completedSteps++;
       setUploadProgress((completedSteps / totalSteps) * 100);
 
-      const { sizes, rowIndex, errors, images, imageUrls, warnings, collection, priceRange, ...productData } = product;
+      const { sizes, rowIndex, errors, images, imageUrls, warnings, collection, priceRange, imageMatched, requestedFilenames, image_filenames, ...productData } = product;
       payloads.push({
         ...productData,
         images: productImageUrls,
@@ -406,6 +457,11 @@ const handleBulkUpload = async () => {
     }
 
     setCreatedProducts(data || []);
+    setUploadSummary({
+      successWithImages: productsWithImages,
+      successNoImages: productsWithoutImages,
+      failed: failedProducts
+    });
 
     toast({
       title: "Upload completed",
@@ -448,9 +504,10 @@ const handleBulkUpload = async () => {
               <ul className="list-disc list-inside space-y-1 text-sm">
 <li>Upload a CSV (.csv) or Excel (.xlsx) file with product details</li>
 <li>Required fields: name, description, priceRange, type, material, stock, slug, collection</li>
-<li>Optional fields: occasion, sku, sizes, meta_title, meta_description</li>
-<li>Optional: Upload product images (JPG, PNG, WebP). Images auto-match by filename (slug, SKU, or name). Support patterns like slug-1.jpg, slug-2.png</li>
-<li>Rows with errors are skipped; all issues are listed below</li>
+<li>Optional fields: occasion, sku, sizes, meta_title, meta_description, image_filenames</li>
+<li>Use <code className="bg-muted px-1 py-0.5 rounded">image_filenames</code> field with pipe-separated filenames: <code className="bg-muted px-1 py-0.5 rounded">image-1.jpg|image-2.png</code></li>
+<li>Upload product images separately (JPG, JPEG, PNG, WebP). Images auto-match by exact filename (case-insensitive)</li>
+<li>Rows with errors are skipped; all valid products are uploaded</li>
               </ul>
               <Button
                 variant="outline"
@@ -628,15 +685,57 @@ const handleBulkUpload = async () => {
   </div>
 )}
 
-{/* Created/Updated Results */}
-{!uploading && createdProducts.length > 0 && (
-  <div className="space-y-2">
-    <h4 className="text-sm font-medium">Created products:</h4>
-    <ul className="list-disc list-inside text-sm">
-      {createdProducts.map((p) => (
-        <li key={p.id}>{p.name} — {p.slug}</li>
-      ))}
-    </ul>
+{/* Upload Summary */}
+{!uploading && uploadSummary && (
+  <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
+    <h4 className="text-lg font-semibold">Upload Summary</h4>
+    
+    {uploadSummary.successWithImages.length > 0 && (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-green-600">
+          <CheckCircle2 className="h-5 w-5" />
+          <h5 className="font-medium">Products with Images ({uploadSummary.successWithImages.length})</h5>
+        </div>
+        <ul className="list-disc list-inside text-sm ml-6 space-y-1">
+          {uploadSummary.successWithImages.map((p) => (
+            <li key={p.slug}>{p.name} — {p.images.length} image(s)</li>
+          ))}
+        </ul>
+      </div>
+    )}
+    
+    {uploadSummary.successNoImages.length > 0 && (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-yellow-600">
+          <AlertCircle className="h-5 w-5" />
+          <h5 className="font-medium">Products without Images ({uploadSummary.successNoImages.length})</h5>
+        </div>
+        <ul className="list-disc list-inside text-sm ml-6 space-y-1">
+          {uploadSummary.successNoImages.map((p) => (
+            <li key={p.slug}>
+              {p.name}
+              {p.requestedFilenames.length > 0 && (
+                <span className="text-muted-foreground"> — requested: {p.requestedFilenames.join(', ')}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+    
+    {uploadSummary.failed.length > 0 && (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-red-600">
+          <X className="h-5 w-5" />
+          <h5 className="font-medium">Failed Products ({uploadSummary.failed.length})</h5>
+        </div>
+        <ul className="list-disc list-inside text-sm ml-6 space-y-1">
+          {uploadSummary.failed.map((p) => (
+            <li key={p.rowIndex}>{p.name} — {p.errors.join(', ')}</li>
+          ))}
+        </ul>
+      </div>
+    )}
   </div>
 )}
 
