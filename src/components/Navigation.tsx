@@ -195,6 +195,16 @@ const Navigation = () => {
               <Link to="/collections" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-smooth">
                 Collections
               </Link>
+              
+              {/* Login/Signup Menu Item */}
+              {!loading && !user && (
+                <button 
+                  onClick={handleLogin}
+                  className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-smooth"
+                >
+                  Login / Sign Up
+                </button>
+              )}
             </div>
           </div>
 
