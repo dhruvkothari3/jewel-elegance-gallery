@@ -16,12 +16,9 @@ import StoreDetailPage from "./pages/StoreDetailPage";
 import WishlistPage from "./pages/WishlistPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
-<<<<<<< HEAD
 import AuthGate from './components/auth/AuthGate';
 import LoginPage from './pages/LoginPage';
-=======
 import AccountPage from "./pages/AccountPage";
->>>>>>> 38d837e18af682ba607e96bb20380d91ceb8808a
 
 const queryClient = new QueryClient();
 
@@ -43,13 +40,9 @@ const App = () => (
               <Route path="/wishlist" element={<AuthGate><WishlistPage /></AuthGate>} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
-<<<<<<< HEAD
+              <Route path="/account" element={<AccountPage />} />
               <Route path="/admin" element={<AuthGate><AdminPage /></AuthGate>} />
               <Route path="/login" element={<LoginPage />} />
-=======
-              <Route path="/account" element={<AccountPage />} />
-              <Route path="/admin" element={<AdminPage />} />
->>>>>>> 38d837e18af682ba607e96bb20380d91ceb8808a
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
