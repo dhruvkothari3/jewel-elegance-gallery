@@ -13,6 +13,9 @@ export default defineConfig(({ mode }) => ({
       'Cross-Origin-Embedder-Policy': 'unsafe-none'
     }
   },
+  build: {
+    outDir: 'dist',
+  },
   plugins: [
     react(),
     mode === 'development' &&

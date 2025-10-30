@@ -16,6 +16,8 @@ import StoreDetailPage from "./pages/StoreDetailPage";
 import WishlistPage from "./pages/WishlistPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
+import AuthGate from './components/auth/AuthGate';
+import LoginPage from './pages/LoginPage';
 
 const queryClient = new QueryClient();
 
@@ -34,10 +36,11 @@ const App = () => (
               <Route path="/collection/:handle" element={<CollectionDetailPage />} />
               <Route path="/stores" element={<StoresPage />} />
               <Route path="/store/:id" element={<StoreDetailPage />} />
-              <Route path="/wishlist" element={<WishlistPage />} />
+              <Route path="/wishlist" element={<AuthGate><WishlistPage /></AuthGate>} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
-              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/admin" element={<AuthGate><AdminPage /></AuthGate>} />
+              <Route path="/login" element={<LoginPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

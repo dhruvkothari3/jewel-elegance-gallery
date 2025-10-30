@@ -300,21 +300,23 @@ const Navigation = () => {
               </DropdownMenu>
             ) : (
               <div className="flex gap-2">
-                <Button 
-                  onClick={handleLogin}
-                  variant="outline" 
-                  size="sm"
-                  className="border-primary/20 hover:bg-primary/10"
-                >
-                  Login
-                </Button>
-                <Button 
-                  onClick={handleSignup}
-                  size="sm"
-                  className="gradient-gold text-primary-foreground hover:opacity-90"
-                >
-                  Sign Up
-                </Button>
+                <Link to="/login">
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    className="border-primary/20 hover:bg-primary/10"
+                  >
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button 
+                    size="sm"
+                    className="gradient-gold text-primary-foreground hover:opacity-90"
+                  >
+                    Sign Up
+                  </Button>
+                </Link>
               </div>
             )}
           </div>
