@@ -465,6 +465,67 @@ const Navigation = () => {
                   Store Locator
                 </button>
               </div>
+
+              {/* Authentication Section for Mobile */}
+              <div className="border-t border-border pt-4 pb-4 px-3 space-y-2">
+                {loading ? (
+                  <div className="flex justify-center py-2">
+                    <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  </div>
+                ) : user ? (
+                  <div className="space-y-2">
+                    <div className="px-3 py-2 text-sm">
+                      <p className="font-medium text-foreground">{user.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isAdmin ? 'Administrator' : 'Customer'}
+                      </p>
+                    </div>
+                    {isAdmin && (
+                      <Link 
+                        to="/admin" 
+                        className="block px-3 py-2 text-base font-medium text-foreground hover:text-primary"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Settings className="inline h-4 w-4 mr-2" />
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2 text-base font-medium text-foreground hover:text-primary"
+                    >
+                      <LogOut className="inline h-4 w-4 mr-2" />
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Button
+                      onClick={() => {
+                        handleLogin();
+                        setIsMenuOpen(false);
+                      }}
+                      variant="outline"
+                      className="w-full border-primary/20 hover:bg-primary/10"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Login
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        handleSignup();
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full gradient-gold text-primary-foreground hover:opacity-90"
+                    >
+                      Sign Up
+                    </Button>
+                  </div>
+                )}
+              </div>
               
               {/* Category Filters */}
               {Object.entries(menuCategories).map(([category, items]) => (
