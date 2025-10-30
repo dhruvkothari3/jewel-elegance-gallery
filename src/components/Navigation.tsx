@@ -152,7 +152,7 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="bg-background shadow-soft sticky top-0 z-50">
+    <nav className="bg-background shadow-soft sticky top-0 z-50 safe-top">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -291,6 +291,12 @@ const Navigation = () => {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/account" className="cursor-pointer">
+                      <User className="w-4 h-4 mr-2" />
+                      My Account
+                    </Link>
+                  </DropdownMenuItem>
                   {isAdmin && (
                     <>
                       <DropdownMenuItem asChild>
@@ -379,9 +385,9 @@ const Navigation = () => {
         {/* Active Filters Display */}
         {hasActiveFilters() && (
           <div className="border-t border-border py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 flex-wrap gap-2">
-                <span className="text-sm text-muted-foreground">Active filters:</span>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center space-x-2 flex-wrap gap-2 overflow-x-auto [-webkit-overflow-scrolling:touch] flex-1">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Active filters:</span>
                 {filters.search && (
                   <Badge variant="secondary" className="gap-1">
                     Search: "{filters.search}"
@@ -438,7 +444,7 @@ const Navigation = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden border-t border-border">
-            <div className="px-2 pt-2 pb-3 space-y-1">
+            <div className="px-2 pt-2 pb-3 space-y-1 max-h-[100svh] overflow-y-auto">
               {/* Quick Links */}
               <div className="space-y-1 mb-4">
                 <Link to="/collections" className="block px-3 py-2 text-base font-medium text-foreground hover:text-primary">
@@ -480,6 +486,14 @@ const Navigation = () => {
                         {isAdmin ? 'Administrator' : 'Customer'}
                       </p>
                     </div>
+                    <Link 
+                      to="/account" 
+                      className="block px-3 py-2 text-base font-medium text-foreground hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <User className="inline h-4 w-4 mr-2" />
+                      My Account
+                    </Link>
                     {isAdmin && (
                       <Link 
                         to="/admin" 

@@ -8,6 +8,10 @@
 
 @layer base {
   :root {
+    /* Safe Area for Notches */
+    --safe-top: env(safe-area-inset-top);
+    --safe-bottom: env(safe-area-inset-bottom);
+    
     /* Core Brand Colors */
     --background: 54 75% 98%;          /* Warm cream white */
     --foreground: 27 43% 13%;          /* Deep charcoal brown */
@@ -133,5 +137,13 @@
   
   .jewelry-hover {
     @apply transform transition-elegant hover:scale-105 hover:shadow-elegant;
+  }
+  
+  .safe-top {
+    padding-top: max(12px, var(--safe-top));
+  }
+  
+  .safe-bottom {
+    padding-bottom: var(--safe-bottom);
   }
 }
