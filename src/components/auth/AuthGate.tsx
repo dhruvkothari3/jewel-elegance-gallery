@@ -16,7 +16,7 @@ const AuthGate = ({ children }: { children: ReactNode }) => {
     }
   }, [user, loading, navigate, location]);
 
-  if (loading || (!user && location.pathname !== '/login')) {
+  if (loading || (!user && !location.pathname.includes('/login'))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">

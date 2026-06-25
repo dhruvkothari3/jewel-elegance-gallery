@@ -8,8 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
   const hasSession = !!sessionData.data.session;
   const redirectUrl = window.location.pathname;
   const onLoginPage =
-    redirectUrl.startsWith('/login') ||
-    redirectUrl.startsWith('/signup');
+    redirectUrl.includes('/login') ||
+    redirectUrl.includes('/signup');
 
   if (!hasSession && !onLoginPage) {
     window.location.href = `${import.meta.env.BASE_URL}login`;

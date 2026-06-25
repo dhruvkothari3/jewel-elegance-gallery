@@ -1,0 +1,56 @@
+# Query: /login
+# ContextLines: 1
+
+12 results - 6 files
+
+API-Documentation.md:
+  19  ### Authentication Flow
+  20: 1. Users sign up/login via Supabase Auth
+  21  2. JWT tokens are issued for authenticated requests
+
+src/App.tsx:
+  20  import VisitorClickGate from './components/auth/VisitorClickGate';
+  21: import LoginPage from './pages/LoginPage';
+  22  import AccountPage from "./pages/AccountPage";
+
+  46                <Route path="/admin" element={<AuthGate><AdminPage /></AuthGate>} />
+  47:               <Route path="/login" element={<LoginPage />} />
+  48                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+src/main.tsx:
+  10    const onLoginPage =
+  11:     redirectUrl.startsWith('/login') ||
+  12      redirectUrl.startsWith('/signup');
+
+src/components/Navigation.tsx:
+  318                <div className="flex gap-2">
+  319:                 <Link to="/login">
+  320                    <Button 
+
+  327                  </Link>
+  328:                 <Link to="/login">
+  329                    <Button 
+
+src/components/auth/AuthGate.tsx:
+  11      if (!loading && !user) {
+  12:       navigate('/login', {
+  13          replace: true,
+
+  18  
+  19:   if (loading || (!user && location.pathname !== '/login')) {
+  20      return (
+
+src/components/auth/VisitorClickGate.tsx:
+   9   * - Any click on a button or link (except whitelisted ones) bounces
+  10:  *   unauthenticated users to /login so they sign up before interacting.
+  11   */
+  12: const PUBLIC_PATHS = ['/login', '/account'];
+  13  
+
+  37        if (
+  38:         href.startsWith('/login') ||
+  39          href.startsWith('/signup') ||
+
+  52        });
+  53:       navigate('/login', { state: { from: location.pathname } });
+  54      };
