@@ -8,7 +8,6 @@ export interface Product {
   name: string;
   description: string | null;
   images: string[];
-  price_range: string | null;
   stock: number;
   type: 'ring' | 'necklace' | 'earring' | 'bracelet' | 'bangle';
   material: 'gold' | 'diamond' | 'platinum' | 'rose-gold';
