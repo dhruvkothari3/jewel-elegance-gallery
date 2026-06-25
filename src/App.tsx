@@ -17,6 +17,7 @@ import WishlistPage from "./pages/WishlistPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import AuthGate from './components/auth/AuthGate';
+import VisitorClickGate from './components/auth/VisitorClickGate';
 import LoginPage from './pages/LoginPage';
 import AccountPage from "./pages/AccountPage";
 
@@ -30,6 +31,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+            <VisitorClickGate />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/product/:id" element={<ProductDetail />} />
