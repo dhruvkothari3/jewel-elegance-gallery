@@ -9,7 +9,7 @@ import { toast } from 'sonner';
  * - Any click on a button or link (except whitelisted ones) bounces
  *   unauthenticated users to /login so they sign up before interacting.
  */
-const PUBLIC_PATHS = ['/login', '/account'];
+const PUBLIC_PATHS = ['login', 'account'];
 
 const VisitorClickGate = () => {
   const { user, loading } = useAuth();
@@ -19,7 +19,12 @@ const VisitorClickGate = () => {
   useEffect(() => {
     if (loading || user) return;
     // Allow free browsing on auth pages themselves
-    if (PUBLIC_PATHS.includes(location.pathname)) return;
+    if (
+    location.pathname.includes('/login') ||
+    location.pathname.includes('/account')
+    ) {
+      return;
+    }
 
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
@@ -50,8 +55,10 @@ const VisitorClickGate = () => {
       toast.info('Please sign up to continue', {
         description: 'Create a free account to explore products, wishlist and more.',
       });
-      navigate('/login', { state: { from: location.pathname } });
-    };
+      navigate('/login', {
+        replace: true,
+        state: { from: location.pathname }
+      });
 
     document.addEventListener('click', handler, true);
     return () => document.removeEventListener('click', handler, true);
